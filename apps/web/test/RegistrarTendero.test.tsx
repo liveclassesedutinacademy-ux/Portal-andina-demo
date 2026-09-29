@@ -21,14 +21,14 @@ function simularRespuesta(estado: number, cuerpo: unknown) {
 }
 
 /** Llena el formulario con los datos válidos base de la historia HU-101. */
-async function llenarDatosBase(numeroDocumento: string) {
+async function llenarDatosBase(numeroDocumento: string, tipoDocumento = 'DI') {
   const usuario = userEvent.setup();
   render(
     <MemoryRouter>
       <RegistrarTendero />
     </MemoryRouter>,
   );
-  await usuario.selectOptions(screen.getByLabelText('Tipo de documento'), 'DI');
+  await usuario.selectOptions(screen.getByLabelText('Tipo de documento'), tipoDocumento);
   await usuario.type(screen.getByLabelText('Número de documento'), numeroDocumento);
   await usuario.type(screen.getByLabelText('Nombre del tendero'), 'Prueba Norte');
   await usuario.type(screen.getByLabelText('Nombre de la tienda'), 'Tienda Prueba Norte');
@@ -58,6 +58,18 @@ describe('RegistrarTendero', () => {
       correo: 'prueba@ejemplo.test',
       direccion: 'Dirección de prueba 1',
     });
+  });
+
+  it.each([
+    ['RT', '999123456-1'],
+    ['PA', '999ABC'],
+  ])('envía el tipo de documento elegido: %s', async (tipoDocumento, numeroDocumento) => {
+    const fetchSimulado = simularRespuesta(201, { tendero: {} });
+    const usuario = await llenarDatosBase(numeroDocumento, tipoDocumento);
+    await usuario.click(screen.getByRole('button', { name: 'Guardar' }));
+
+    const cuerpo = JSON.parse(String(fetchSimulado.mock.calls[0][1]?.body));
+    expect(cuerpo).toMatchObject({ tipoDocumento, numeroDocumento });
   });
 
   it('ante un duplicado muestra el mensaje de la API y conserva lo escrito (CA22, CA13)', async () => {

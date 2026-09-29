@@ -24,6 +24,10 @@ describe('DI', () => {
   it('quita los puntos: 999.124.001 → 999124001 (CA12)', () => {
     expect(validarDocumento('DI', '999.124.001')).toEqual({ valido: true, numero: '999124001' });
   });
+
+  it('solo quita espacios y puntos: rechaza un tabulador', () => {
+    expect(validarDocumento('DI', '999\t124001')).toEqual({ valido: false, error: MENSAJES_DOCUMENTO.DI });
+  });
 });
 
 describe('RT', () => {

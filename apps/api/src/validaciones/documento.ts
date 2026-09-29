@@ -23,7 +23,7 @@ export type ResultadoDocumento = { valido: true; numero: string } | { valido: fa
  * para que caracteres como «ß» o «á» no se conviertan en letras válidas.
  */
 export function normalizarDocumento(tipo: TipoDocumento, numero: string): string {
-  const limpio = numero.replace(/[\s.]/g, '');
+  const limpio = numero.replace(/[ .]/g, '');
   return tipo === 'PA' ? limpio.replace(/[a-z]/g, (letra) => letra.toUpperCase()) : limpio;
 }
 

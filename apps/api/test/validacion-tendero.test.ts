@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { esquemaRegistroTendero, MENSAJES, primerError } from '../src/validaciones/tendero.js';
+import { esquemaRegistroTendero, MENSAJE_POR_DEFINIR, MENSAJES, primerError } from '../src/validaciones/tendero.js';
 
 /** Datos válidos base de la historia HU-101. */
 const datosBase = (extra: Record<string, unknown> = {}) => ({
@@ -84,6 +84,34 @@ describe('esquemaRegistroTendero', () => {
   it('rechaza un texto de 101 caracteres y acepta uno de 100', () => {
     expect(errorDe(datosBase({ nombre: 'a'.repeat(101) }))).toBe('Cada campo admite máximo 100 caracteres.');
     expect(datosDe(datosBase({ nombre: 'a'.repeat(100) })).nombre).toHaveLength(100);
+  });
+
+  it.each([
+    ['nombreTienda', 'a'.repeat(101)],
+    ['direccion', 'a'.repeat(101)],
+    ['correo', `${'a'.repeat(88)}@ejemplo.test`],
+    ['telefono', `555${'-'.repeat(91)}0000001`],
+  ])('rechaza %s de 101 caracteres (P1)', (campo, valor) => {
+    expect(valor).toHaveLength(101);
+    expect(errorDe(datosBase({ [campo]: valor }))).toBe('Cada campo admite máximo 100 caracteres.');
+  });
+
+  it.each(['555\t0000001', '555\n0000001'])('en el teléfono solo quita espacios y guiones: rechaza %j (P2)', (telefono) => {
+    expect(errorDe(datosBase({ telefono }))).toBe('El teléfono debe tener de 7 a 10 dígitos.');
+  });
+
+  it.each([
+    ['numeroDocumento vacío', { numeroDocumento: '' }],
+    ['numeroDocumento ausente', { numeroDocumento: undefined }],
+    ['numeroDocumento como número', { numeroDocumento: 999123456 }],
+    ['telefono como número', { telefono: 5550000001 }],
+    ['nombre como número', { nombre: 123 }],
+  ])('sin mensaje aprobado: %s → MENSAJE_POR_DEFINIR', (_caso, extra) => {
+    expect(errorDe(datosBase(extra))).toBe(MENSAJE_POR_DEFINIR);
+  });
+
+  it('un cuerpo que no es un objeto no tiene mensaje aprobado', () => {
+    expect(errorDe(null)).toBe(MENSAJE_POR_DEFINIR);
   });
 
   it('descarta zona y estado del cuerpo (CA3)', () => {

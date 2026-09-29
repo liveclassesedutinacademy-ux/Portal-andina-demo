@@ -15,8 +15,18 @@ const MENSAJE = {
   maximo: 'Cada campo admite máximo 100 caracteres.',
 } as const;
 
+/**
+ * Texto para las reglas que no tienen mensaje aprobado: número de documento vacío o que no es texto,
+ * campo de texto con otro tipo de dato y cuerpo que no es un objeto. Se reemplaza cuando se apruebe su texto.
+ */
+export const MENSAJE_POR_DEFINIR = '[POR DEFINIR: D1]';
+
 /** Todos los textos que puede devolver la validación del registro. */
-export const MENSAJES: readonly string[] = [...Object.values(MENSAJE), ...Object.values(MENSAJES_DOCUMENTO)];
+export const MENSAJES: readonly string[] = [
+  ...Object.values(MENSAJE),
+  ...Object.values(MENSAJES_DOCUMENTO),
+  MENSAJE_POR_DEFINIR,
+];
 
 const MAXIMO = 100;
 const FORMATO_CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -24,16 +34,21 @@ const FORMATO_CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 /** Orden del formulario (D3); el vendedor no es un campo del formulario y va primero. */
 const ORDEN = ['vendedorId', 'tipoDocumento', 'numeroDocumento', 'nombre', 'nombreTienda', 'telefono', 'correo', 'direccion'];
 
+/** Un campo ausente o nulo es «obligatorio»; otro tipo de dato no tiene mensaje aprobado. */
+const errorDeTipo = (obligatorio: string) => (issue: { input?: unknown }) =>
+  issue.input === undefined || issue.input === null ? obligatorio : MENSAJE_POR_DEFINIR;
+
 /** Texto obligatorio: sin los espacios de los extremos (D2), no vacío (PT3) y de máximo 100 caracteres. */
 const textoObligatorio = (mensaje: string) =>
-  z.string({ error: mensaje }).trim().min(1, { error: mensaje }).max(MAXIMO, { error: MENSAJE.maximo });
+  z.string({ error: errorDeTipo(mensaje) }).trim().min(1, { error: mensaje }).max(MAXIMO, { error: MENSAJE.maximo });
 
 /** Teléfono obligatorio: sin espacios ni guiones deben quedar de 7 a 10 dígitos; se devuelve como se escribió (P2). */
 export const esquemaTelefono = z
-  .string({ error: MENSAJE.telefono })
+  .string({ error: errorDeTipo(MENSAJE.telefono) })
   .trim()
   .min(1, { error: MENSAJE.telefono })
-  .refine((v) => v === '' || /^\d{7,10}$/.test(v.replace(/[\s-]/g, '')), { error: MENSAJE.telefonoInvalido });
+  .max(MAXIMO, { error: MENSAJE.maximo })
+  .refine((v) => v === '' || /^\d{7,10}$/.test(v.replace(/[ -]/g, '')), { error: MENSAJE.telefonoInvalido });
 
 /** Correo opcional (P3 a); vacío o con solo espacios cuenta como no escrito y queda nulo (D4). */
 export const esquemaCorreo = z
@@ -57,15 +72,18 @@ export const esquemaRegistroTendero = z
       correo: esquemaCorreo,
       direccion: textoObligatorio(MENSAJE.direccion),
     },
-    { error: MENSAJE.vendedor },
+    { error: MENSAJE_POR_DEFINIR },
   )
   .superRefine(
     (datos, ctx) => {
       const tipo = datos?.tipoDocumento;
       if (!TIPOS_DOCUMENTO.includes(tipo)) return; // El tipo ya tiene su propio error.
       const numero = datos.numeroDocumento;
-      const resultado = typeof numero === 'string' ? validarDocumento(tipo, numero) : null;
-      if (!resultado?.valido) ctx.addIssue({ code: 'custom', path: ['numeroDocumento'], message: MENSAJES_DOCUMENTO[tipo] });
+      if (typeof numero !== 'string' || numero.trim() === '') {
+        ctx.addIssue({ code: 'custom', path: ['numeroDocumento'], message: MENSAJE_POR_DEFINIR });
+      } else if (!validarDocumento(tipo, numero).valido) {
+        ctx.addIssue({ code: 'custom', path: ['numeroDocumento'], message: MENSAJES_DOCUMENTO[tipo] });
+      }
     },
     // Se ejecuta aunque otro campo haya fallado, para respetar el orden de D3.
     { when: () => true },

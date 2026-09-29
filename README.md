@@ -8,6 +8,9 @@ Distribuidora Andina y Nodo Software son empresas ficticias; todos los datos son
 - Git.
 
 ## Primeros pasos
+1. En GitHub, en la página de este repositorio, haz clic en **Use this template** → **Create a new repository**.
+2. Elige tu cuenta como dueña, ponle un nombre y **marca la casilla «Include all branches»**. Sin esa casilla, tu copia no trae los puntos de control.
+3. Clona tu copia y ejecuta:
 ```bash
 npm install
 npx playwright install chromium   # solo la primera vez, para las pruebas de extremo a extremo
@@ -25,11 +28,12 @@ Abre http://localhost:5173 e ingresa con el código de vendedor `V-101`, `V-102`
 | `npm run db:reset` | Vuelve a cargar la base local desde `test-data/` |
 
 ## Puntos de control
-El repositorio tiene etiquetas que marcan el estado esperado al terminar cada etapa del curso.
-Si te pierdes, puedes comparar tu trabajo con la etiqueta o partir de ella:
+El repositorio tiene una rama por cada punto de control del curso (`punto-01-inicio`, `punto-02-plan-aprobado`…), con el estado esperado al terminar cada etapa.
+Si te pierdes, puedes comparar tu trabajo con un punto de control o partir de él:
 ```bash
-git tag                         # lista los puntos de control
-git switch -c mi-rama punto-01-inicio
+git branch -r                                   # lista los puntos de control
+git diff origin/punto-02-plan-aprobado          # compara tu trabajo con un punto de control
+git switch -c mi-rama origin/punto-01-inicio    # empieza una rama desde un punto de control
 ```
 
 ## Estructura

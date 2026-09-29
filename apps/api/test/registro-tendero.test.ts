@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import request from 'supertest';
 import { appDePrueba, datosBase, idVendedor } from './ayuda.js';
-import { MENSAJES } from '../src/validaciones/tendero.js';
+import { MENSAJE_GENERAL, MENSAJES } from '../src/validaciones/tendero.js';
 
 type Prueba = ReturnType<typeof appDePrueba>;
 
@@ -230,6 +230,15 @@ describe('POST /api/tenderos: errores de validación', () => {
     const res = await registrar(p, con(9999, 'DI', '999124010'));
     expect(res.status).toBe(404);
     expect(res.body).toEqual({ error: 'Vendedor no encontrado.' });
+    expect(contarTenderos(p)).toBe(antes);
+  });
+
+  it('D10: un JSON mal formado responde 400 con el mensaje general y no crea nada', async () => {
+    const p = await preparar();
+    const antes = contarTenderos(p);
+    const res = await request(p.app).post('/api/tenderos').set('Content-Type', 'application/json').send('{"vendedorId":1,');
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: MENSAJE_GENERAL });
     expect(contarTenderos(p)).toBe(antes);
   });
 

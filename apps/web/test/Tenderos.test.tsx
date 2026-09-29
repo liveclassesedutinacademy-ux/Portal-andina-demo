@@ -36,6 +36,16 @@ describe('Tenderos', () => {
     expect(await screen.findByText('Tienda Prueba Norte')).toBeInTheDocument();
   });
 
+  it('si la lista no carga, muestra el error de la API', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ error: 'Vendedor no encontrado' }), { status: 404 })));
+    render(
+      <MemoryRouter initialEntries={['/tenderos']}>
+        <Tenderos />
+      </MemoryRouter>,
+    );
+    expect(await screen.findByRole('alert')).toHaveTextContent('Vendedor no encontrado');
+  });
+
   it('sin ese estado no muestra el mensaje', async () => {
     renderizar('/tenderos');
     expect(await screen.findByText('Tienda Prueba Norte')).toBeInTheDocument();

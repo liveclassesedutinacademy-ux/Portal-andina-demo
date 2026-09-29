@@ -27,6 +27,13 @@ Revisión del plan de HU-102 por el tech lead de Nodo Software antes de implemen
 | Orden de las comprobaciones | Id del tendero (400) → vendedor (400) → el tendero existe (404) → zona (403) → estado inactivo (409) → cuerpo (400). Un tendero inactivo de otra zona responde 403. |
 | Pruebas del tendero inactivo | El tendero inactivo se crea en la preparación de cada prueba, con valores inventados e `INSERT` con parámetros; no se agrega a `test-data/`. |
 
+## Mensajes aprobados en la implementación
+
+| Id | Decisión |
+|---|---|
+| D12 | Teléfono con caracteres que no son dígitos, espacios ni guiones (p. ej. `555-ABC-1234`) → 400 con «El teléfono solo puede tener números.». Aprobado el 29 de septiembre de 2026. |
+| D13 | Correo ausente del cuerpo del `PUT` (campo `correo` no enviado) → 400 con «Revisa los datos del tendero.» (aplica D10 de HU-101). Aprobado el 29 de septiembre de 2026. |
+
 ## Fuera de esta etapa
 
 | Tema | Decisión |

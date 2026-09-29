@@ -27,3 +27,4 @@ Revisión del plan `docs/planes/HU-101-plan.md` por el tech lead de Nodo Softwar
 | D8 | De acuerdo: el esquema de teléfono y correo queda en `validaciones/tendero.ts` para reutilizarlo en HU-102, sin tocar la edición en esta historia. |
 | D9 | El PA se guarda en mayúsculas. |
 | D10 | Agregada en la implementación: cuando un dato llega con un tipo o una forma que no tiene mensaje aprobado (número de documento vacío, un campo que no es texto, un cuerpo que no es un objeto), la API responde 400 con «Revisa los datos del tendero.» |
+| D11 | Texto del `.catch` de la carga de la lista de tenderos en el portal: «No se pudo cargar la lista de tenderos». Aprobado el 29 de septiembre de 2026. |

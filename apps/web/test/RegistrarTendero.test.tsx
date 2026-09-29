@@ -1,16 +1,19 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { RegistrarTendero } from '../src/pages/RegistrarTendero';
+import { Tenderos } from '../src/pages/Tenderos';
 
-vi.mock('../src/lib/sesion', () => ({
-  useSesion: () => ({
+// La sesión es el mismo objeto en cada render, como en la app: Tenderos carga la lista cuando cambia el vendedor.
+vi.mock('../src/lib/sesion', () => {
+  const sesion = {
     vendedor: { id: 1, codigo: 'V-101', nombre: 'Vendedor Ruta Norte', zona: 'Norte' },
     entrar: vi.fn(),
     salir: vi.fn(),
-  }),
-}));
+  };
+  return { useSesion: () => sesion };
+});
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -94,6 +97,42 @@ describe('RegistrarTendero', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent('El documento de identidad debe tener de 6 a 10 dígitos.');
     expect(screen.getByLabelText('Número de documento')).toHaveValue('99912');
+  });
+
+  it('al guardar con éxito vuelve a la lista con «Tendero registrado» (CA25)', async () => {
+    const tendero = {
+      id: 16, tipoDocumento: 'DI', numeroDocumento: '999124011', nombre: 'Prueba Norte', nombreTienda: 'Tienda Prueba Norte',
+      telefono: '5550000001', correo: 'prueba@ejemplo.test', direccion: 'Dirección de prueba 1', zona: 'Norte', vendedorId: 1, estado: 'activo',
+    };
+    // POST /api/tenderos responde 201; GET /api/tenderos devuelve la lista con el tendero nuevo.
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (_ruta: string, opciones?: RequestInit) =>
+        opciones?.method === 'POST'
+          ? new Response(JSON.stringify({ tendero }), { status: 201 })
+          : new Response(JSON.stringify({ tenderos: [tendero] }), { status: 200 }),
+      ),
+    );
+    const usuario = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={['/tenderos/nuevo']}>
+        <Routes>
+          <Route path="/tenderos/nuevo" element={<RegistrarTendero />} />
+          <Route path="/tenderos" element={<Tenderos />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    await usuario.type(screen.getByLabelText('Número de documento'), '999124011');
+    await usuario.type(screen.getByLabelText('Nombre del tendero'), 'Prueba Norte');
+    await usuario.type(screen.getByLabelText('Nombre de la tienda'), 'Tienda Prueba Norte');
+    await usuario.type(screen.getByLabelText('Teléfono'), '5550000001');
+    await usuario.type(screen.getByLabelText('Correo'), 'prueba@ejemplo.test');
+    await usuario.type(screen.getByLabelText('Dirección'), 'Dirección de prueba 1');
+    await usuario.click(screen.getByRole('button', { name: 'Guardar' }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Tendero registrado');
+    expect(screen.getByRole('heading', { name: 'Tenderos de la zona Norte' })).toBeInTheDocument();
+    expect(await screen.findByText('Tienda Prueba Norte')).toBeInTheDocument();
   });
 
   it('marca como obligatorios todos los campos menos el correo, con máximo 100 caracteres (PT6)', () => {

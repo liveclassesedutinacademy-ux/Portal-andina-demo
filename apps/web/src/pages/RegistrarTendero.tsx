@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { api, type DatosRegistroTendero, type TipoDocumento } from '../lib/api';
 import { useSesion } from '../lib/sesion';
 
@@ -23,6 +24,7 @@ const MAXIMO = 100;
  */
 export function RegistrarTendero() {
   const { vendedor } = useSesion();
+  const navigate = useNavigate();
   const [datos, setDatos] = useState<Campos>(VACIO);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,6 +37,7 @@ export function RegistrarTendero() {
     setError(null);
     try {
       await api.registrarTendero({ vendedorId: vendedor.id, ...datos });
+      navigate('/tenderos', { state: { mensaje: 'Tendero registrado' } });
     } catch (err) {
       // No se reinician los campos: el vendedor corrige lo que escribió.
       setError(err instanceof Error ? err.message : 'No se pudo guardar');

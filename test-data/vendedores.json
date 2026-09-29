@@ -1,0 +1,20 @@
+[
+  {
+    "id": 1,
+    "codigo": "V-101",
+    "nombre": "Vendedor Ruta Norte",
+    "zona": "Norte"
+  },
+  {
+    "id": 2,
+    "codigo": "V-102",
+    "nombre": "Vendedor Ruta Sur",
+    "zona": "Sur"
+  },
+  {
+    "id": 3,
+    "codigo": "V-103",
+    "nombre": "Vendedor Ruta Centro",
+    "zona": "Centro"
+  }
+]

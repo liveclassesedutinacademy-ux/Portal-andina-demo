@@ -197,6 +197,15 @@ describe('PUT /api/tenderos/:id', () => {
     expect([tendero.tipoDocumento, tendero.numeroDocumento]).toEqual(['DI', '999100137']);
   });
 
+  it('los 5 campos válidos más solo numeroDocumento responden 400 y el tendero no cambia (P1 c)', async () => {
+    const { app } = appDePrueba();
+    const antes = await leerTendero(app, 1);
+    const res = await editar(app, '1').send(await edicionDe(app, 1, { numeroDocumento: '999123456-1' }));
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: 'Revisa los datos del tendero.' });
+    expect(await leerTendero(app, 1)).toEqual(antes);
+  });
+
   it('un JSON mal formado responde 400 sin detalle interno', async () => {
     const { app } = appDePrueba();
     const res = await editar(app, '1').set('Content-Type', 'application/json').send('{mal');

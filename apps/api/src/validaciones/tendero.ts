@@ -124,8 +124,6 @@ export const esquemaEdicionTendero = z.strictObject(
   { error: MENSAJE_GENERAL },
 );
 
-export type EdicionTendero = z.output<typeof esquemaEdicionTendero>;
-
 /** Mensaje del primer campo que falla, en el orden del formulario (D3). */
 export function primerError(resultado: { error: z.ZodError }): string {
   const posicion = (campo: PropertyKey | undefined) => ORDEN.indexOf(String(campo));

@@ -14,6 +14,7 @@ export function Tenderos() {
   return (
     <section>
       <h1>Tenderos de la zona {vendedor?.zona}</h1>
+      <Link to="/tenderos/nuevo">Registrar tendero</Link>
       <table>
         <thead><tr><th>Tienda</th><th>Tendero</th><th>Documento</th><th>Teléfono</th><th></th></tr></thead>
         <tbody>

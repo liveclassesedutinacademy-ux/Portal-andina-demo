@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import type { BaseDeDatos } from '../db.js';
-import { esquemaRegistroTendero, primerError } from '../validaciones/tendero.js';
+import { esquemaEdicionTendero, esquemaRegistroTendero, primerError } from '../validaciones/tendero.js';
 
 const COLUMNAS = `id, tipo_documento AS tipoDocumento, numero_documento AS numeroDocumento, nombre,
   nombre_tienda AS nombreTienda, telefono, correo, direccion, zona, vendedor_id AS vendedorId, estado`;
@@ -88,6 +88,36 @@ export function rutasTenderos(db: BaseDeDatos) {
       res.status(404).json({ error: 'Tendero no encontrado' });
       return;
     }
+    res.json({ tendero });
+  });
+
+  // Edición de los datos de un tendero (HU-102). Solo cambian los 5 campos editables (P1 c).
+  router.put('/:id', (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) {
+      res.status(400).json({ error: 'El id del tendero debe ser un número.' });
+      return;
+    }
+    const existe = db.prepare('SELECT id FROM tenderos WHERE id = ?').get(id);
+    if (!existe) {
+      res.status(404).json({ error: 'No encontramos este tendero.' });
+      return;
+    }
+    const resultado = esquemaEdicionTendero.safeParse(req.body);
+    if (!resultado.success) {
+      res.status(400).json({ error: primerError(resultado) });
+      return;
+    }
+    const datos = resultado.data;
+    db.prepare('UPDATE tenderos SET nombre = ?, nombre_tienda = ?, telefono = ?, correo = ?, direccion = ? WHERE id = ?').run(
+      datos.nombre,
+      datos.nombreTienda,
+      datos.telefono,
+      datos.correo,
+      datos.direccion,
+      id,
+    );
+    const tendero = db.prepare(`SELECT ${COLUMNAS} FROM tenderos WHERE id = ?`).get(id);
     res.json({ tendero });
   });
 

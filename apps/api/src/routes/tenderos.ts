@@ -92,15 +92,36 @@ export function rutasTenderos(db: BaseDeDatos) {
   });
 
   // Edición de los datos de un tendero (HU-102). Solo cambian los 5 campos editables (P1 c).
+  // Orden de las comprobaciones: id → vendedor → existe → zona → estado → cuerpo.
   router.put('/:id', (req, res) => {
     const id = Number(req.params.id);
     if (!Number.isInteger(id) || id <= 0) {
       res.status(400).json({ error: 'El id del tendero debe ser un número.' });
       return;
     }
-    const existe = db.prepare('SELECT id FROM tenderos WHERE id = ?').get(id);
-    if (!existe) {
+    // Sin ingreso con contraseña, el vendedor llega en la consulta, igual que en la lista.
+    const vendedorId = Number(req.query.vendedorId);
+    const vendedor =
+      Number.isInteger(vendedorId) && vendedorId > 0
+        ? (db.prepare('SELECT zona FROM vendedores WHERE id = ?').get(vendedorId) as { zona: string } | undefined)
+        : undefined;
+    if (!vendedor) {
+      res.status(400).json({ error: 'Falta el vendedor.' });
+      return;
+    }
+    const actual = db.prepare('SELECT zona, estado FROM tenderos WHERE id = ?').get(id) as
+      | { zona: string; estado: string }
+      | undefined;
+    if (!actual) {
       res.status(404).json({ error: 'No encontramos este tendero.' });
+      return;
+    }
+    if (actual.zona !== vendedor.zona) {
+      res.status(403).json({ error: 'Este tendero no es de tu zona.' });
+      return;
+    }
+    if (actual.estado === 'inactivo') {
+      res.status(409).json({ error: 'Este tendero está inactivo y no se puede editar.' });
       return;
     }
     const resultado = esquemaEdicionTendero.safeParse(req.body);

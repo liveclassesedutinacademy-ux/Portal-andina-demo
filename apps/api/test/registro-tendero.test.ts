@@ -115,6 +115,68 @@ describe('POST /api/tenderos: registro válido', () => {
   });
 });
 
+describe('POST /api/tenderos: duplicados', () => {
+  const DUPLICADO = 'Este tendero ya está registrado.';
+  const INACTIVO = 'Este tendero ya está registrado y está inactivo. Comunícate con la oficina comercial.';
+
+  const contarDocumento = ({ db }: Prueba, tipo: string, numero: string) =>
+    (db.prepare('SELECT COUNT(*) AS n FROM tenderos WHERE tipo_documento = ? AND numero_documento = ?').get(tipo, numero) as { n: number }).n;
+
+  /** Preparación de CA16: tendero inactivo en la zona Norte, creado con parámetros. */
+  function insertarInactivo({ db }: Prueba, vendedorId: number, numeroDocumento: string) {
+    db.prepare(
+      `INSERT INTO tenderos (tipo_documento, numero_documento, nombre, nombre_tienda, telefono, correo, direccion, zona, vendedor_id, estado)
+       VALUES ('DI', ?, ?, ?, ?, ?, ?, 'Norte', ?, 'inactivo')`,
+    ).run(numeroDocumento, 'Prueba Norte', 'Tienda Prueba Norte', '5550000001', 'prueba@ejemplo.test', 'Dirección de prueba 1', vendedorId);
+  }
+
+  it('CA13: rechaza el mismo DI escrito con puntos y deja un solo tendero', async () => {
+    const p = await preparar();
+    await registrar(p, con(p.v101, 'DI', '999123456'));
+    const res = await registrar(p, con(p.v101, 'DI', '999.123.456'));
+    expect(res.status).toBe(409);
+    expect(res.body).toEqual({ error: DUPLICADO });
+    expect(contarDocumento(p, 'DI', '999123456')).toBe(1);
+  });
+
+  it('CA15: en otra zona responde solo el mensaje general, sin datos de la otra zona', async () => {
+    const p = await preparar();
+    const v102 = await idVendedor(p.app, 'V-102');
+    await registrar(p, con(p.v101, 'DI', '999123456'));
+    const res = await registrar(p, con(v102, 'DI', '999123456'));
+    expect(res.status).toBe(409);
+    expect(res.body).toEqual({ error: DUPLICADO });
+  });
+
+  it('CA16: un tendero inactivo de la zona del vendedor responde el mensaje de inactivo', async () => {
+    const p = await preparar();
+    insertarInactivo(p, p.v101, '999124006');
+    const res = await registrar(p, con(p.v101, 'DI', '999124006'));
+    expect(res.status).toBe(409);
+    expect(res.body).toEqual({ error: INACTIVO });
+    expect(contarDocumento(p, 'DI', '999124006')).toBe(1);
+  });
+
+  it('CA16 y D5: un tendero inactivo de otra zona responde solo el mensaje general', async () => {
+    const p = await preparar();
+    const v102 = await idVendedor(p.app, 'V-102');
+    insertarInactivo(p, p.v101, '999124006');
+    const res = await registrar(p, con(v102, 'DI', '999124006'));
+    expect(res.status).toBe(409);
+    expect(res.body).toEqual({ error: DUPLICADO });
+  });
+
+  it('CA17: de dos envíos simultáneos uno crea y el otro responde 409', async () => {
+    const p = await preparar();
+    const respuestas = await Promise.all([
+      registrar(p, con(p.v101, 'DI', '999124003')),
+      registrar(p, con(p.v101, 'DI', '999124003')),
+    ]);
+    expect(respuestas.map((r) => r.status).sort()).toEqual([201, 409]);
+    expect(contarDocumento(p, 'DI', '999124003')).toBe(1);
+  });
+});
+
 describe('POST /api/tenderos: errores de validación', () => {
   const DI = 'El documento de identidad debe tener de 6 a 10 dígitos.';
   const RT = 'El registro tributario no es válido.';

@@ -26,3 +26,4 @@ Revisión del plan `docs/planes/HU-101-plan.md` por el tech lead de Nodo Softwar
 | D7 | No hay contrato OpenAPI en este repositorio: el endpoint nuevo se agrega a la tabla de endpoints de `docs/contexto-del-portal.md` en el mismo pull request. |
 | D8 | De acuerdo: el esquema de teléfono y correo queda en `validaciones/tendero.ts` para reutilizarlo en HU-102, sin tocar la edición en esta historia. |
 | D9 | El PA se guarda en mayúsculas. |
+| D10 | Agregada en la implementación: cuando un dato llega con un tipo o una forma que no tiene mensaje aprobado (número de documento vacío, un campo que no es texto, un cuerpo que no es un objeto), la API responde 400 con «Revisa los datos del tendero.» |

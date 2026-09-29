@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { esquemaRegistroTendero, MENSAJE_POR_DEFINIR, MENSAJES, primerError } from '../src/validaciones/tendero.js';
+import { esquemaRegistroTendero, MENSAJE_GENERAL, MENSAJES, primerError } from '../src/validaciones/tendero.js';
 
 /** Datos válidos base de la historia HU-101. */
 const datosBase = (extra: Record<string, unknown> = {}) => ({
@@ -106,12 +106,12 @@ describe('esquemaRegistroTendero', () => {
     ['numeroDocumento como número', { numeroDocumento: 999123456 }],
     ['telefono como número', { telefono: 5550000001 }],
     ['nombre como número', { nombre: 123 }],
-  ])('sin mensaje aprobado: %s → MENSAJE_POR_DEFINIR', (_caso, extra) => {
-    expect(errorDe(datosBase(extra))).toBe(MENSAJE_POR_DEFINIR);
+  ])('sin mensaje aprobado: %s → MENSAJE_GENERAL', (_caso, extra) => {
+    expect(errorDe(datosBase(extra))).toBe(MENSAJE_GENERAL);
   });
 
   it('un cuerpo que no es un objeto no tiene mensaje aprobado', () => {
-    expect(errorDe(null)).toBe(MENSAJE_POR_DEFINIR);
+    expect(errorDe(null)).toBe(MENSAJE_GENERAL);
   });
 
   it('descarta zona y estado del cuerpo (CA3)', () => {

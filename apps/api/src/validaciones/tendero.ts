@@ -19,13 +19,13 @@ const MENSAJE = {
  * Texto para las reglas que no tienen mensaje aprobado: número de documento vacío o que no es texto,
  * campo de texto con otro tipo de dato y cuerpo que no es un objeto. Se reemplaza cuando se apruebe su texto.
  */
-export const MENSAJE_POR_DEFINIR = '[POR DEFINIR: D1]';
+export const MENSAJE_GENERAL = 'Revisa los datos del tendero.';
 
 /** Todos los textos que puede devolver la validación del registro. */
 export const MENSAJES: readonly string[] = [
   ...Object.values(MENSAJE),
   ...Object.values(MENSAJES_DOCUMENTO),
-  MENSAJE_POR_DEFINIR,
+  MENSAJE_GENERAL,
 ];
 
 const MAXIMO = 100;
@@ -36,7 +36,7 @@ const ORDEN = ['vendedorId', 'tipoDocumento', 'numeroDocumento', 'nombre', 'nomb
 
 /** Un campo ausente o nulo es «obligatorio»; otro tipo de dato no tiene mensaje aprobado. */
 const errorDeTipo = (obligatorio: string) => (issue: { input?: unknown }) =>
-  issue.input === undefined || issue.input === null ? obligatorio : MENSAJE_POR_DEFINIR;
+  issue.input === undefined || issue.input === null ? obligatorio : MENSAJE_GENERAL;
 
 /** Texto obligatorio: sin los espacios de los extremos (D2), no vacío (PT3) y de máximo 100 caracteres. */
 const textoObligatorio = (mensaje: string) =>
@@ -72,7 +72,7 @@ export const esquemaRegistroTendero = z
       correo: esquemaCorreo,
       direccion: textoObligatorio(MENSAJE.direccion),
     },
-    { error: MENSAJE_POR_DEFINIR },
+    { error: MENSAJE_GENERAL },
   )
   .superRefine(
     (datos, ctx) => {
@@ -80,7 +80,7 @@ export const esquemaRegistroTendero = z
       if (!TIPOS_DOCUMENTO.includes(tipo)) return; // El tipo ya tiene su propio error.
       const numero = datos.numeroDocumento;
       if (typeof numero !== 'string' || numero.trim() === '') {
-        ctx.addIssue({ code: 'custom', path: ['numeroDocumento'], message: MENSAJE_POR_DEFINIR });
+        ctx.addIssue({ code: 'custom', path: ['numeroDocumento'], message: MENSAJE_GENERAL });
       } else if (!validarDocumento(tipo, numero).valido) {
         ctx.addIssue({ code: 'custom', path: ['numeroDocumento'], message: MENSAJES_DOCUMENTO[tipo] });
       }

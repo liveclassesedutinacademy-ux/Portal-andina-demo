@@ -6,7 +6,11 @@ La API ahora tiene `PUT /api/tenderos/:id` para editar los 5 datos que el vended
 
 **HU-102 · Edición de datos del tendero**. Historia: `docs/historias/HU-102-edicion-de-datos-del-tendero.md`. Respuestas del product owner: `docs/historias/HU-102-respuestas-del-product-owner.md`. Plan aprobado: `docs/planes/HU-102-plan.md`. Este PR cubre los **pasos 1, 2 y 3**. Decisiones del equipo: `docs/planes/HU-102-decisiones-del-equipo.md`. Tabla criterio–prueba: `docs/planes/HU-102-pruebas.md`.
 
-**Base del PR y dependencia.** Este PR va contra la rama `hu-101-registro-tenderos` y no contra `main`, porque HU-101 todavía no está fusionada en `main` (PR #1, abierto). **Depende del PR #1:** se fusiona después de él. El diff propio de este PR es el de `git diff hu-101-registro-tenderos...HEAD`: 7 commits y 12 archivos. La rama sale de `0f999df`. Después de ese commit, `hu-101-registro-tenderos` recibió tres commits más (`e3ddc9e`, `d45980d` y `c34eecb`), que no están en esta rama. `git merge-tree` no muestra conflictos con ellos.
+**Base del PR y dependencia.** Este PR va contra la rama `hu-101-registro-tenderos` y no contra `main`, porque HU-101 todavía no está fusionada en `main` (PR #1, abierto). **Depende del PR #1:** se fusiona después de él. El diff propio de este PR es el de `git diff hu-101-registro-tenderos...HEAD`. La rama incluye `hu-101-registro-tenderos` hasta `c34eecb`, con la unión `f021aa9`.
+
+**Las cifras de esta sección cuentan solo el trabajo de HU-102:** 7 commits (`d3bb4b2` a `00e55ac`, en la tabla de abajo) y 11 archivos de código, pruebas y documentos de la historia. El PR muestra más commits y archivos, que no son implementación de la historia:
+- **Commits:** los de esta descripción (`770036e` y `6d5567a`), la unión con la base (`f021aa9`) y los de los ajustes pedidos en la revisión del PR.
+- **Archivos:** `docs/planes/HU-102-pr.md` (esta descripción) y `docs/contexto-del-portal.md` (tabla de endpoints, pedida en la revisión).
 
 Commits de HU-102 en la rama:
 
@@ -17,7 +21,7 @@ Commits de HU-102 en la rama:
 | `458e219` | Paso 2: `PUT /api/tenderos/:id` guarda los 5 campos editables |
 | `021b2d7` | Paso 3: 403 para otra zona y 409 para tendero inactivo |
 | `b118d04` | Ajustes de la revisión: se quita el tipo `EdicionTendero`, que no se usaba, y se agrega la prueba con solo `numeroDocumento` |
-| `a73a899` | Aprobación de los mensajes D12 y D13 en las decisiones de HU-102. También agrega D11 en `docs/planes/HU-101-decisiones-del-equipo.md`, así que ese archivo de HU-101 aparece en el diff |
+| `a73a899` | Aprobación de los mensajes D12 y D13 en las decisiones de HU-102. También agrega D11 en `docs/planes/HU-101-decisiones-del-equipo.md`. Ese cambio ya está en la base, así que ese archivo no aparece en el diff del PR |
 | `00e55ac` | Pruebas del endpoint y tabla `HU-102-pruebas.md`. También agrega pruebas de CA1 (formulario) y CA18 (lista) sobre código que ya existía |
 
 Cambios respecto del texto del plan, según las decisiones del equipo:
@@ -64,41 +68,43 @@ Pruebas del endpoint que no corresponden a un criterio, sino a decisiones del eq
 
 - [x] `npm test` pasa
 - [x] `npm run lint` pasa
-- [x] `npm run test:e2e` pasa. Las 2 pruebas que existían pasan; no hay prueba e2e de la edición (paso 7, fuera de este cambio).
+- [x] `npm run test:e2e` pasa. Pasan las 4 pruebas: 2 de navegación y 2 del registro, que vienen de HU-101. No hay prueba e2e de la edición (paso 7, fuera de este cambio).
 
-Ejecución del 30 de septiembre de 2026 sobre el commit `00e55ac`, rama `hu-102-edicion-tendero`. El commit que agrega esta descripción solo cambia `docs/planes/HU-102-pr.md`. No se ejecutaron las pruebas sobre la unión con los tres commits posteriores de `hu-101-registro-tenderos`.
+Ejecución del 30 de septiembre de 2026 sobre el commit `fb10af4`, rama `hu-102-edicion-tendero`, ya unida con la base. Los commits posteriores solo cambian esta descripción.
 
 `npm test`:
 
 ```
 apps/api
  Test Files  7 passed (7)
-      Tests  200 passed (200)
+      Tests  226 passed (226)
 
 apps/web
  Test Files  3 passed (3)
-      Tests  14 passed (14)
+      Tests  15 passed (15)
 ```
 
 `npm run lint`: `tsc --noEmit` en `apps/api` y en `apps/web`, sin errores.
 
-`npm run test:e2e`:
+`npm run test:e2e` (sin los tiempos de cada prueba):
 
 ```
-Running 2 tests using 1 worker
-  ✓  1 [chromium] › e2e/navegacion.spec.ts:3:5 › el vendedor ingresa, consulta el catálogo y ve los tenderos de su zona (909ms)
-  ✓  2 [chromium] › e2e/navegacion.spec.ts:19:5 › un código de vendedor desconocido muestra un error (427ms)
-  2 passed (4.4s)
+Running 4 tests using 1 worker
+  ✓  1 [chromium] › e2e/navegacion.spec.ts:3:5 › el vendedor ingresa, consulta el catálogo y ve los tenderos de su zona
+  ✓  2 [chromium] › e2e/navegacion.spec.ts:19:5 › un código de vendedor desconocido muestra un error
+  ✓  3 [chromium] › e2e/registro-tendero.spec.ts:28:5 › CA25 y CA2: registra un tendero y vuelve a la lista con «Tendero registrado»
+  ✓  4 [chromium] › e2e/registro-tendero.spec.ts:40:5 › CA22 y CA13: un DI repetido con puntos muestra el mensaje y conserva lo escrito
+  4 passed (6.3s)
 ```
 
 Solo las pruebas de HU-102 en la API (`npm test -w apps/api -- tenderos.test validacion-tendero --reporter=verbose -t "PUT /api/tenderos/:id|esquemaEdicionTendero"`):
 
 ```
  Test Files  2 passed (2)
-      Tests  67 passed | 44 skipped (111)
+      Tests  67 passed | 53 skipped (120)
 ```
 
-Son 29 pruebas del bloque `PUT /api/tenderos/:id` y 38 del bloque `esquemaEdicionTendero`. Las 44 omitidas son las de `GET` y las del registro (HU-101), que el filtro excluye y que pasan en la ejecución completa de arriba.
+Son 29 pruebas del bloque `PUT /api/tenderos/:id` y 38 del bloque `esquemaEdicionTendero`. Las 53 omitidas son las de `GET` y las del registro (HU-101), que el filtro excluye y que pasan en la ejecución completa de arriba.
 
 **Mutaciones manuales**, registradas en `docs/planes/HU-102-pruebas.md`. Todas se detectan:
 - quitar el control de zona;

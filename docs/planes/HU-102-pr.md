@@ -26,7 +26,7 @@ Cambios respecto del texto del plan, según las decisiones del equipo:
 - El orden de las comprobaciones es: id (400) → vendedor (400) → el tendero existe (404) → zona (403) → inactivo (409) → cuerpo (400).
 - No hay migración nueva.
 
-Archivos de código del cambio: `apps/api/src/routes/tenderos.ts` (ruta `PUT`, línea 96) y `apps/api/src/validaciones/tendero.ts` (`telefonoEdicion`, `correoEdicion` y `esquemaEdicionTendero`, líneas 103 a 127). El manejador de JSON mal formado de `apps/api/src/app.ts` (línea 20) ya existía desde HU-101 (`0f999df`). Este cambio no lo modifica, pero también aplica al `PUT`.
+Archivos de código del cambio: `apps/api/src/routes/tenderos.ts` (función `zonaDelVendedor`, que comparten la lista y la edición, y ruta `PUT`, línea 106) y `apps/api/src/validaciones/tendero.ts` (`telefonoEdicion`, `correoEdicion` y `esquemaEdicionTendero`, líneas 103 a 125). El manejador de JSON mal formado de `apps/api/src/app.ts` (línea 20) ya existía desde HU-101 (`0f999df`). Este cambio no lo modifica, pero también aplica al `PUT`.
 
 Abreviaturas de la tabla:
 - **T**: `apps/api/test/tenderos.test.ts`, bloque `PUT /api/tenderos/:id`.
@@ -44,14 +44,14 @@ Abreviaturas de la tabla:
 | CA6 Separadores y longitud | E, `esquemaTelefono`, reutilizada de HU-101 | T · «guarda 555 123 4567 como se escribió (CA6)», «rechaza el teléfono 555 y no lo cambia (CA6)», «rechaza el teléfono 5551234567890123 y no lo cambia (CA6)»; V · «rechaza el teléfono … por su longitud (CA6)» |
 | CA7 Campos vacíos | E, `esquemaTelefono` (obligatorio) y `esquemaCorreo` (vacío → `NULL`) | T · «el teléfono vacío del tendero 4 es obligatorio (CA7)», «un correo vacío borra el correo guardado (CA7)»; V · «el teléfono "" es obligatorio (CA7, P4 b)», «el correo "" queda nulo (CA7, P4 b)» |
 | CA8 Normalización | E, `trim` sin pasar a minúsculas (P5) | T · «quita los espacios de los extremos del correo y conserva las mayúsculas (CA8)»; V · «… (CA8, P5)». Se guarda `Tendero3@Ejemplo.TEST`, según P5 y no según la [Propuesta] del texto de la historia. |
-| CA9 Otra zona | R, línea 120 (403) | T · «no edita un tendero de otra zona (CA9)», «no edita un tendero activo de otra zona aunque el cuerpo sea válido (CA9)», «un tendero inactivo de otra zona responde 403» |
+| CA9 Otra zona | R, línea 126 (403) | T · «no edita un tendero de otra zona (CA9)», «no edita un tendero activo de otra zona aunque el cuerpo sea válido (CA9)», «un tendero inactivo de otra zona responde 403» |
 | CA10 Id 9999 | R, 404 «No encontramos este tendero.» | T · «responde 404 con el id 9999 (CA10)» |
 | CA11 Id `abc` | R, 400 «El id del tendero debe ser un número.» | T · «responde 400 con el id abc (CA11)» |
 | CA12 Campos no permitidos | E, `z.strictObject` | T · «rechaza un cuerpo con solo zona y estado (CA12)», «rechaza un cuerpo válido con zona, estado y documento, y no cambia nada (CA12)»; V · «rechaza el campo no editable … aunque el resto sea válido (CA12, P1 c)» |
 | CA13 Validación en la API | R y E: la API valida sin pasar por el formulario | T · pruebas de CA4 y CA5, que comparan el cuerpo exacto con Supertest |
 | CA14 `D'Luis` | R, `UPDATE` con parámetros `?` | T · «guarda exactamente el nombre D'Luis (CA14)» |
 | CA15, CA19, CA20 Documento | E, `z.strictObject`. Versión «el documento no se edita» (decisiones del equipo) | T · «el documento no se edita: CA15 / CA19 / CA20 responde 400 y el documento no cambia», «los 5 campos válidos más solo numeroDocumento responden 400 y el tendero no cambia (P1 c)» |
-| CA16 Tendero inactivo | API: R, línea 124 (409). El formulario queda fuera de este cambio (paso 5). | T · «no edita un tendero inactivo de la zona (CA16)». Formulario: fuera de este cambio. |
+| CA16 Tendero inactivo | API: R, línea 130 (409). El formulario queda fuera de este cambio (paso 5). | T · «no edita un tendero inactivo de la zona (CA16)». Formulario: fuera de este cambio. |
 | CA17 Sin cambios | R | T · «guardar sin cambios responde 200 y deja los datos iguales (CA17)» |
 | CA18 Se ve en la lista | Fuera de este cambio (lista y navegación, pasos 5, 6 y 7) | Fuera de este cambio. `00e55ac` agrega a `apps/web/test/Tenderos.test.tsx` «muestra «Datos actualizados» y el teléfono nuevo al volver de la edición (CA18)», sobre la lista que ya existía. |
 
@@ -118,7 +118,7 @@ No aplica: los commits de HU-102 no modifican ninguna pantalla (`apps/web/src` n
 - **Guardar desde el formulario no funciona todavía.** `api.actualizarTendero` (`apps/web/src/lib/api.ts`, línea 54) no envía `vendedorId`, así que el `PUT` responde 400 «Falta el vendedor.». Antes de este cambio tampoco guardaba, porque la ruta no existía. Se corrige en el paso 5 (plan, riesgo 16).
 - **La identidad del vendedor se puede falsificar.** Llega como `?vendedorId=` desde el cliente, así que el control de zona (403) no protege frente a alguien que cambie ese valor. La protección real llega con el ingreso con contraseña, fuera de este sprint (decisiones del equipo).
 - **Tenderos sin teléfono.** Los tenderos de `test-data/` sin teléfono (4, 8 y 12, según `test-data/tenderos.json`) no se pueden guardar «sin cambios» hasta que se complete el teléfono, porque el teléfono es obligatorio (P4 b). Es coherente con P4 b, pero puede sorprender a quien pruebe.
-- **Mensajes distintos en `GET` y `PUT`.** `GET /api/tenderos/:id` sigue respondiendo «Identificador inválido» y «Tendero no encontrado» (`apps/api/src/routes/tenderos.ts`, líneas 83 y 88). El `PUT` responde «El id del tendero debe ser un número.» y «No encontramos este tendero.». Unificarlos queda fuera de la historia (plan, riesgo 12).
+- **Mensajes distintos en `GET` y `PUT`.** `GET /api/tenderos/:id` sigue respondiendo «Identificador inválido» y «Tendero no encontrado» (`apps/api/src/routes/tenderos.ts`, líneas 93 y 98). El `PUT` responde «El id del tendero debe ser un número.» y «No encontramos este tendero.». Unificarlos queda fuera de la historia (plan, riesgo 12).
 - **Edición parcial.** El `PUT` exige los 5 campos (decisiones del equipo), así que un cliente que envíe solo el campo que cambia recibe 400.
 
 **Qué no se probó:**

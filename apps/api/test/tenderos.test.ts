@@ -16,6 +16,14 @@ describe('GET /api/tenderos', () => {
     const res = await request(app).get('/api/tenderos');
     expect(res.status).toBe(400);
   });
+
+  it('responde 400 si el vendedorId no es un número y 404 si el vendedor no existe', async () => {
+    const { app } = appDePrueba();
+    const noNumerico = await request(app).get('/api/tenderos').query({ vendedorId: 'abc' });
+    expect([noNumerico.status, noNumerico.body]).toEqual([400, { error: 'Falta el vendedor' }]);
+    const noExiste = await request(app).get('/api/tenderos').query({ vendedorId: 9999 });
+    expect([noExiste.status, noExiste.body]).toEqual([404, { error: 'Vendedor no encontrado' }]);
+  });
 });
 
 describe('GET /api/tenderos/:id', () => {

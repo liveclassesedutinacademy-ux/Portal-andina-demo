@@ -127,9 +127,10 @@ No aplica: los commits de HU-102 no modifican ninguna pantalla (`apps/web/src` n
 
 **Qué queda fuera del alcance:** los pasos 4 a 7 del plan: validación en el formulario, guardar desde el formulario con `vendedorId`, bloqueo del tendero inactivo en la interfaz, mensaje en la lista y prueba e2e.
 
-**Pendiente en la documentación:**
+**Documentación:**
 - **La historia no está corregida.** CA15, CA19 y CA20 todavía esperan que el documento se pueda editar, y CA8 conserva la [Propuesta] de pasar el correo a minúsculas. Las pruebas siguen las decisiones del equipo y P5. El product owner corrige la historia aparte.
-- **El endpoint no está en la tabla de endpoints.** Las decisiones del equipo piden agregar el `PUT` a `docs/contexto-del-portal.md` en este mismo PR (HU-101, D7), y este cambio no lo hace. En `hu-101-registro-tenderos`, el commit `d45980d` ya agregó el `POST`. La fila «Edición de datos del tendero» de ese archivo sigue diciendo «Por construir».
+
+La tabla de endpoints de `docs/contexto-del-portal.md` ya incluye el `PUT`, como piden las decisiones del equipo (HU-101, D7). La fila «Edición de datos del tendero» ahora dice que la API guarda los cambios y que la pantalla todavía no.
 
 **Dependencia del PR #1:** si el PR #1 cambia antes de fusionarse, esta rama puede necesitar actualizarse contra `hu-101-registro-tenderos` y repetir las pruebas.
 

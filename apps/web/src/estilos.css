@@ -1,0 +1,16 @@
+:root { font-family: system-ui, sans-serif; color: #1f2937; background: #f9fafb; }
+body { margin: 0; }
+.encabezado { display: flex; justify-content: space-between; align-items: center; padding: 12px 24px; background: #1e3a8a; color: #fff; }
+.encabezado nav { display: flex; gap: 16px; align-items: center; }
+.encabezado a { color: #fff; }
+.vendedor { font-size: 14px; opacity: .85; }
+main { max-width: 960px; margin: 24px auto; padding: 0 16px; }
+.tarjeta { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 24px; max-width: 480px; }
+form { display: grid; gap: 8px; }
+label { font-weight: 600; font-size: 14px; }
+input, select { padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 15px; }
+button { padding: 8px 14px; border: 0; border-radius: 6px; background: #2563eb; color: #fff; font-weight: 600; cursor: pointer; }
+table { width: 100%; border-collapse: collapse; margin-top: 16px; background: #fff; }
+th, td { text-align: left; padding: 8px; border-bottom: 1px solid #e5e7eb; font-size: 14px; }
+.error { color: #b91c1c; }
+.pie { text-align: center; font-size: 12px; color: #6b7280; padding: 24px; }

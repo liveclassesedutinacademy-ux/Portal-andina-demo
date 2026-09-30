@@ -146,3 +146,8 @@ Lo que consta en el repositorio:
 - **Qué revisaste tú.** El repositorio no registra quién hizo la revisión de `b118d04` ni la aplicación de `docs/lista-de-revision-codigo-generado.md` a los pasos 1 a 3.
 - **Registro de la sesión.** Solo `a73a899` tiene un enlace `Claude-Session`. Los commits de los pasos 1, 2 y 3 y el de pruebas no enlazan ninguna sesión.
 - **Pasos hechos con Claude antes de implementar.** No consta si el análisis de la historia, las preguntas al product owner y el plan se hicieron con Claude.
+
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+https://claude.ai/code/session_011DCg5j6WaQUYk4GqgEvEwn

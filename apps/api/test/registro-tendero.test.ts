@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import request from 'supertest';
 import { appDePrueba, datosBase, idVendedor } from './ayuda.js';
-import { MENSAJE_GENERAL, MENSAJES } from '../src/validaciones/tendero.js';
+import { crearApp } from '../src/app.js';
+import { MENSAJE_GENERAL } from '../src/validaciones/tendero.js';
 
 type Prueba = ReturnType<typeof appDePrueba>;
 
@@ -86,9 +87,29 @@ describe('POST /api/tenderos: registro válido', () => {
 
   it('CA14: acepta el mismo número con otro tipo de documento', async () => {
     const p = await preparar();
-    await registrar(p, con(p.v101, 'DI', '999123456'));
+    expect((await registrar(p, con(p.v101, 'DI', '999123456'))).status).toBe(201);
     const res = await registrar(p, con(p.v101, 'PA', '999123456'));
     expect(res.status).toBe(201);
+    expect(filaDe(p, 'DI', '999123456')).toBeDefined();
+    expect(filaDe(p, 'PA', '999123456')).toBeDefined();
+  });
+
+  it.each([
+    ['RT', '999.000.024-4', '999000024-4'],
+    ['PA', '999 aBc', '999ABC'],
+  ])('anexo y P11 b: guarda %s %s normalizado', async (tipo, numero, guardado) => {
+    const p = await preparar();
+    const res = await registrar(p, con(p.v101, tipo, numero));
+    expect(res.status).toBe(201);
+    expect(filaDe(p, tipo, guardado)).toBeDefined();
+  });
+
+  it('las claves que no son del contrato no tocan otros tenderos (id del tendero 1 de test-data/)', async () => {
+    const p = await preparar();
+    const tendero1 = p.db.prepare('SELECT * FROM tenderos WHERE id = 1').get();
+    // Si la clave se ignora o se rechaza no está decidido; en ningún caso puede cambiar el tendero 1.
+    await registrar(p, con(p.v101, 'DI', '999124001', { id: 1, creado_en: '2000-01-01', vendedor_id: 2 }));
+    expect(p.db.prepare('SELECT * FROM tenderos WHERE id = 1').get()).toEqual(tendero1);
   });
 
   it("CA23: guarda D'Luis idéntico", async () => {
@@ -166,13 +187,57 @@ describe('POST /api/tenderos: duplicados', () => {
     expect(res.body).toEqual({ error: DUPLICADO });
   });
 
-  it('CA17: de dos envíos simultáneos uno crea y el otro responde 409', async () => {
+  it.each([
+    ['PA en mayúsculas y luego en minúsculas (D9)', 'PA', '999ABC', '999abc'],
+    ['RT sin espacios y luego con espacios', 'RT', '999000024-4', '999 000 024-4'],
+  ])('duplicado escrito distinto: %s', async (_caso, tipo, primero, segundo) => {
     const p = await preparar();
-    const respuestas = await Promise.all([
-      registrar(p, con(p.v101, 'DI', '999124003')),
-      registrar(p, con(p.v101, 'DI', '999124003')),
-    ]);
-    expect(respuestas.map((r) => r.status).sort()).toEqual([201, 409]);
+    expect((await registrar(p, con(p.v101, tipo, primero))).status).toBe(201);
+    const res = await registrar(p, con(p.v101, tipo, segundo));
+    expect(res.status).toBe(409);
+    expect(res.body).toEqual({ error: DUPLICADO });
+    expect(contarDocumento(p, tipo, primero)).toBe(1);
+  });
+
+  it.each([
+    ['de la zona del vendedor', 'DI', '999100137'],
+    ['de otra zona', 'RT', '999200710-2'],
+  ])('rechaza el documento de un tendero de test-data/ %s', async (_caso, tipo, numero) => {
+    const p = await preparar();
+    const res = await registrar(p, con(p.v101, tipo, numero));
+    expect(res.status).toBe(409);
+    expect(res.body).toEqual({ error: DUPLICADO });
+    expect(contarDocumento(p, tipo, numero)).toBe(1);
+  });
+
+  // En un solo proceso, node:sqlite es síncrono y dos POST nunca se intercalan. Para probar que el índice único
+  // es la fuente de verdad (y no una consulta previa), otro envío guarda el mismo documento justo antes del INSERT.
+  it('CA17: si otro envío guarda el mismo documento antes del INSERT, responde 409 y queda un solo tendero', async () => {
+    const { db } = appDePrueba();
+    let otroEnvio = false;
+    const dbConOtroEnvio = new Proxy(db, {
+      get(objetivo, propiedad) {
+        if (propiedad === 'prepare') {
+          return (sql: string) => {
+            if (!otroEnvio && /^\s*INSERT INTO tenderos/.test(sql)) {
+              otroEnvio = true;
+              db.prepare(
+                `INSERT INTO tenderos (tipo_documento, numero_documento, nombre, nombre_tienda, telefono, correo, direccion, zona, vendedor_id)
+                 VALUES ('DI', ?, ?, ?, ?, ?, ?, 'Norte', 1)`,
+              ).run('999124003', 'Prueba Norte', 'Tienda Prueba Norte', '5550000001', 'prueba@ejemplo.test', 'Dirección de prueba 1');
+            }
+            return objetivo.prepare(sql);
+          };
+        }
+        const valor = Reflect.get(objetivo, propiedad, objetivo);
+        return typeof valor === 'function' ? valor.bind(objetivo) : valor;
+      },
+    });
+    const p = { app: crearApp(dbConOtroEnvio), db };
+    const res = await registrar(p, con(await idVendedor(p.app, 'V-101'), 'DI', '999124003'));
+    expect(otroEnvio).toBe(true);
+    expect(res.status).toBe(409);
+    expect(res.body).toEqual({ error: DUPLICADO });
     expect(contarDocumento(p, 'DI', '999124003')).toBe(1);
   });
 });
@@ -183,7 +248,8 @@ describe('POST /api/tenderos: errores de validación', () => {
   const PA = 'El pasaporte debe tener de 6 a 9 letras mayúsculas o dígitos.';
 
   it.each([
-    ['CA5', 'DI', '99912', DI],
+    // CA21 pide la misma respuesta de CA5 llamando a la API sin el formulario, que es como corren todas estas pruebas.
+    ['CA5 y CA21', 'DI', '99912', DI],
     ['CA5', 'DI', '99912345678', DI],
     ['CA5', 'DI', '99912A', DI],
     ['CA7', 'RT', '999123456-2', RT],
@@ -202,19 +268,16 @@ describe('POST /api/tenderos: errores de validación', () => {
     expect(contarTenderos(p)).toBe(antes);
   });
 
-  it('CA21: la API valida sin el formulario (DI 99912)', async () => {
-    const p = await preparar();
-    const antes = contarTenderos(p);
-    const res = await request(p.app).post('/api/tenderos').set('Content-Type', 'application/json').send(JSON.stringify(con(p.v101, 'DI', '99912')));
-    expect(res.status).toBe(400);
-    expect(res.body).toEqual({ error: DI });
-    expect(contarTenderos(p)).toBe(antes);
-  });
-
   it.each([
     ['CA18', { nombreTienda: '   ' }, '999124007', 'El nombre de la tienda es obligatorio.'],
     ['CA19', { telefono: 'abc' }, '999124008', 'El teléfono debe tener de 7 a 10 dígitos.'],
     ['CA20', { correo: 'sin-arroba' }, '999124009', 'El correo no es válido.'],
+    ['P2 (teléfono con +)', { telefono: '+57 5550001' }, '999124008', 'El teléfono debe tener de 7 a 10 dígitos.'],
+    ['P2 (teléfono con paréntesis)', { telefono: '(555) 0000001' }, '999124008', 'El teléfono debe tener de 7 a 10 dígitos.'],
+    ['D1 (tipo en minúsculas)', { tipoDocumento: 'di' }, '999124010', 'Elige el tipo de documento: DI, RT o PA.'],
+    ['D1 (vendedorId como texto)', { vendedorId: '1' }, '999124010', 'Falta el vendedor.'],
+    ['D1 (vendedorId negativo)', { vendedorId: -1 }, '999124010', 'Falta el vendedor.'],
+    ['D1 (vendedorId con decimales)', { vendedorId: 1.5 }, '999124010', 'Falta el vendedor.'],
   ])('%s: responde 400 con el mensaje aprobado y no crea nada', async (_ca, extra, numero, mensaje) => {
     const p = await preparar();
     const antes = contarTenderos(p);
@@ -252,11 +315,28 @@ describe('POST /api/tenderos: errores de validación', () => {
   it.each([
     ['cuerpo vacío', {}],
     ['vendedorId que no es número', { vendedorId: 'abc' }],
-  ])('no devuelve mensajes por defecto de zod: %s', async (_caso, cuerpo) => {
+  ])('no devuelve mensajes por defecto de zod: %s → el primero en el orden de D3', async (_caso, cuerpo) => {
     const p = await preparar();
     const res = await registrar(p, cuerpo);
     expect(res.status).toBe(400);
-    expect(Object.keys(res.body)).toEqual(['error']);
-    expect(MENSAJES).toContain(res.body.error);
+    expect(res.body).toEqual({ error: 'Falta el vendedor.' });
+  });
+
+  it('D10: un cuerpo que es un arreglo responde 400 con el mensaje general y no crea nada', async () => {
+    const p = await preparar();
+    const antes = contarTenderos(p);
+    const res = await registrar(p, [con(p.v101, 'DI', '999124010')] as unknown as Record<string, unknown>);
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: MENSAJE_GENERAL });
+    expect(contarTenderos(p)).toBe(antes);
+  });
+
+  it('D10: un cuerpo que no es JSON responde 400 con el mensaje general y no crea nada', async () => {
+    const p = await preparar();
+    const antes = contarTenderos(p);
+    const res = await request(p.app).post('/api/tenderos').type('form').send(con(p.v101, 'DI', '999124010'));
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: MENSAJE_GENERAL });
+    expect(contarTenderos(p)).toBe(antes);
   });
 });

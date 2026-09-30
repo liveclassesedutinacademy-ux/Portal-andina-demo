@@ -27,7 +27,7 @@ El vendedor entra con su código (por ejemplo, `V-101`). En este sprint el ingre
 | Catálogo | Hecho. Lista de productos con filtro por categoría; no muestra precios. |
 | Tenderos de la zona | Hecho, solo lectura. Lista de los tenderos de la zona del vendedor. |
 | Registro de tenderos | Hecho. El vendedor registra un tendero desde la lista de tenderos (HU-101). |
-| Edición de datos del tendero | Por construir en este sprint. La pantalla existe, pero no valida los datos ni guarda los cambios. |
+| Edición de datos del tendero | En construcción en este sprint (HU-102). La API guarda los cambios con `PUT /api/tenderos/:id`. La pantalla existe, pero todavía no valida los datos ni guarda los cambios. |
 
 ## 4. Arquitectura
 
@@ -55,6 +55,7 @@ Navegador ──> apps/web (React + Vite, puerto 5173)
 | `GET /api/tenderos?vendedorId=` | Lista los tenderos de la zona del vendedor. | 400 si falta o no es un número; 404 si el vendedor no existe. |
 | `GET /api/tenderos/:id` | Devuelve un tendero. | 400 si el id no es un número; 404 si no existe. |
 | `POST /api/tenderos` | Recibe `{ vendedorId, tipoDocumento, numeroDocumento, nombre, nombreTienda, telefono, correo, direccion }` (el correo es opcional) y crea el tendero con la zona del vendedor y estado `activo`; ignora `zona` y `estado` si llegan en el cuerpo. Guarda el documento normalizado. Devuelve 201 con `{ tendero }`. | 400 si los datos no son válidos, con el mensaje del primer campo que falla en el orden del formulario; 404 si el vendedor no existe; 409 si ya existe un tendero con ese tipo y número de documento (con el mensaje de inactivo solo si ese tendero está inactivo y es de la zona del vendedor). |
+| `PUT /api/tenderos/:id?vendedorId=` | Recibe los 5 campos editables `{ nombre, nombreTienda, telefono, correo, direccion }` (el correo puede ir vacío o nulo, y entonces se guarda nulo) y los guarda sin los espacios de los extremos. No acepta otros campos: el documento, la zona, el vendedor y el estado no se editan. Devuelve 200 con `{ tendero }`. | 400 si el id no es un número; 400 si falta el vendedor, no es un número o no existe; 404 si el tendero no existe; 403 si el tendero es de otra zona; 409 si el tendero está inactivo; 400 si los datos no son válidos o traen un campo no editable, con el mensaje del primer campo que falla. Se comprueban en ese orden. |
 
 ## 5. Datos del tendero
 

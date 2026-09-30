@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { esquemaRegistroTendero, MENSAJE_GENERAL, MENSAJES, primerError } from '../src/validaciones/tendero.js';
+import {
+  esquemaEdicionTendero,
+  esquemaRegistroTendero,
+  MENSAJE_GENERAL,
+  MENSAJE_TELEFONO_SOLO_NUMEROS,
+  MENSAJES,
+  primerError,
+} from '../src/validaciones/tendero.js';
 
 /** Datos válidos base de la historia HU-101. */
 const datosBase = (extra: Record<string, unknown> = {}) => ({
@@ -148,5 +155,129 @@ describe('esquemaRegistroTendero', () => {
   ])('con %s el error es el mensaje aprobado que corresponde', (_caso, cuerpo, mensaje) => {
     expect(errorDe(cuerpo)).toBe(mensaje);
     expect(MENSAJES).toContain(mensaje);
+  });
+});
+
+/** Los 5 campos editables de «Tienda La Esquina» en test-data/ (HU-102, P1 c). */
+const edicionBase = (extra: Record<string, unknown> = {}) => ({
+  nombre: 'Ana Prueba',
+  nombreTienda: 'Tienda La Esquina',
+  telefono: '555-0101',
+  correo: 'tienda1@ejemplo.test',
+  direccion: 'Calle Ficticia 3 n.º 11',
+  ...extra,
+});
+
+function errorDeEdicion(cuerpo: unknown) {
+  const resultado = esquemaEdicionTendero.safeParse(cuerpo);
+  if (resultado.success) throw new Error('Se esperaba un error de validación');
+  return primerError(resultado);
+}
+
+function datosDeEdicion(cuerpo: unknown) {
+  const resultado = esquemaEdicionTendero.safeParse(cuerpo);
+  if (!resultado.success) throw new Error(`Error inesperado: ${primerError(resultado)}`);
+  return resultado.data;
+}
+
+describe('esquemaEdicionTendero', () => {
+  it('acepta los 5 campos editables', () => {
+    expect(datosDeEdicion(edicionBase())).toEqual(edicionBase());
+  });
+
+  it.each(['5559876543', '555 123 4567'])('acepta el teléfono %s y lo entrega como se escribió (CA2, CA6)', (telefono) => {
+    expect(datosDeEdicion(edicionBase({ telefono })).telefono).toBe(telefono);
+  });
+
+  it('un teléfono con letras produce el mensaje de CA4', () => {
+    expect(errorDeEdicion(edicionBase({ telefono: '555-ABC-1234' }))).toBe('El teléfono solo puede tener números.');
+    expect(MENSAJE_TELEFONO_SOLO_NUMEROS).toBe('El teléfono solo puede tener números.');
+  });
+
+  it.each(['555', '5551234567890123'])('rechaza el teléfono %s por su longitud (CA6)', (telefono) => {
+    expect(errorDeEdicion(edicionBase({ telefono }))).toBe('El teléfono debe tener de 7 a 10 dígitos.');
+  });
+
+  it.each(['', '   ', null, undefined])('el teléfono %j es obligatorio (CA7, P4 b)', (telefono) => {
+    expect(errorDeEdicion(edicionBase({ telefono }))).toBe('El teléfono es obligatorio.');
+  });
+
+  it.each(['esquina.ejemplo.test', 'tendero3.ejemplo.test'])('rechaza el correo %s (CA5)', (correo) => {
+    expect(errorDeEdicion(edicionBase({ correo }))).toBe('El correo no es válido.');
+  });
+
+  it.each(['', '   ', null])('el correo %j queda nulo (CA7, P4 b)', (correo) => {
+    expect(datosDeEdicion(edicionBase({ correo })).correo).toBeNull();
+  });
+
+  it('un correo que no es texto no es válido, igual que en el registro', () => {
+    expect(errorDeEdicion(edicionBase({ correo: 5 }))).toBe('El correo no es válido.');
+  });
+
+  it('el correo tiene que venir en el cuerpo, aunque sea vacío', () => {
+    expect(errorDeEdicion(edicionBase({ correo: undefined }))).toBe(MENSAJE_GENERAL);
+  });
+
+  it('quita los espacios de los extremos del correo y conserva las mayúsculas (CA8, P5)', () => {
+    expect(datosDeEdicion(edicionBase({ correo: ' Tendero3@Ejemplo.TEST ' })).correo).toBe('Tendero3@Ejemplo.TEST');
+  });
+
+  it('quita los espacios de los extremos de todos los campos y conserva el interior', () => {
+    const datos = datosDeEdicion(
+      edicionBase({
+        nombre: "  D'Luis ",
+        nombreTienda: ' Tienda La Esquina ',
+        telefono: ' 555 123 4567 ',
+        direccion: ' Calle Ficticia 3 n.º 11 ',
+      }),
+    );
+    expect(datos).toEqual(edicionBase({ nombre: "D'Luis", telefono: '555 123 4567' }));
+  });
+
+  it.each([
+    ['nombre', 'El nombre del tendero es obligatorio.'],
+    ['nombreTienda', 'El nombre de la tienda es obligatorio.'],
+    ['direccion', 'La dirección es obligatoria.'],
+  ])('%s vacío o con solo espacios es obligatorio', (campo, mensaje) => {
+    expect(errorDeEdicion(edicionBase({ [campo]: '' }))).toBe(mensaje);
+    expect(errorDeEdicion(edicionBase({ [campo]: '   ' }))).toBe(mensaje);
+  });
+
+  it.each([
+    ['nombre', 'a'.repeat(101)],
+    ['nombreTienda', 'a'.repeat(101)],
+    ['direccion', 'a'.repeat(101)],
+    ['correo', `${'a'.repeat(88)}@ejemplo.test`],
+    ['telefono', `555${'-'.repeat(91)}0000001`],
+  ])('rechaza %s de 101 caracteres (P5)', (campo, valor) => {
+    expect(valor).toHaveLength(101);
+    expect(errorDeEdicion(edicionBase({ [campo]: valor }))).toBe('Cada campo admite máximo 100 caracteres.');
+  });
+
+  it('acepta un campo de 100 caracteres', () => {
+    expect(datosDeEdicion(edicionBase({ nombre: 'a'.repeat(100) })).nombre).toHaveLength(100);
+  });
+
+  it('rechaza un cuerpo con solo zona y estado (CA12)', () => {
+    expect(errorDeEdicion({ zona: 'Sur', estado: 'inactivo' })).toBe(MENSAJE_GENERAL);
+  });
+
+  it.each([
+    ['zona', 'Sur'],
+    ['estado', 'inactivo'],
+    ['vendedorId', 2],
+    ['tipoDocumento', 'RT'],
+    ['numeroDocumento', '999123456-1'],
+  ])('rechaza el campo no editable %s aunque el resto sea válido (CA12, P1 c)', (campo, valor) => {
+    expect(errorDeEdicion(edicionBase({ [campo]: valor }))).toBe(MENSAJE_GENERAL);
+  });
+
+  it.each([
+    ['nombre como número', edicionBase({ nombre: 123 })],
+    ['telefono como número', edicionBase({ telefono: 5559876543 })],
+    ['cuerpo nulo', null],
+    ['cuerpo como lista', [edicionBase()]],
+  ])('sin mensaje aprobado: %s → MENSAJE_GENERAL', (_caso, cuerpo) => {
+    expect(errorDeEdicion(cuerpo)).toBe(MENSAJE_GENERAL);
   });
 });

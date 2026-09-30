@@ -103,7 +103,7 @@ describe('esquemaRegistroTendero', () => {
     expect(errorDe(datosBase({ [campo]: valor }))).toBe('Cada campo admite máximo 100 caracteres.');
   });
 
-  it.each(['555\t0000001', '555\n0000001'])('en el teléfono solo quita espacios y guiones: rechaza %j (P2)', (telefono) => {
+  it.each(['555\t0000001', '555\n0000001', '+57 5550001', '(555) 0000001', '555.0000001'])('en el teléfono solo quita espacios y guiones: rechaza %j (P2)', (telefono) => {
     expect(errorDe(datosBase({ telefono }))).toBe('El teléfono debe tener de 7 a 10 dígitos.');
   });
 
@@ -138,16 +138,23 @@ describe('esquemaRegistroTendero', () => {
     expect(errorDe({ ...cuerpo, numeroDocumento: '999123456' })).toBe('El nombre del tendero es obligatorio.');
   });
 
+  // Ningún mensaje por defecto de zod: cada caso da el mensaje aprobado que le toca, no uno cualquiera de MENSAJES.
   it.each([
-    ['{}', {}],
-    ['vendedorId: "abc"', datosBase({ vendedorId: 'abc' })],
-    ['tipoDocumento: 5', datosBase({ tipoDocumento: 5 })],
-    ['nombre: 123', datosBase({ nombre: 123 })],
-    ['numeroDocumento: 999123456', datosBase({ numeroDocumento: 999123456 })],
-    ['correo: 5', datosBase({ correo: 5 })],
-    ['cuerpo nulo', null],
-  ])('con %s el error es uno de los mensajes aprobados', (_caso, cuerpo) => {
-    expect(MENSAJES).toContain(errorDe(cuerpo));
+    ['{}', {}, 'Falta el vendedor.'],
+    ['vendedorId: "abc"', datosBase({ vendedorId: 'abc' }), 'Falta el vendedor.'],
+    ['vendedorId: "1"', datosBase({ vendedorId: '1' }), 'Falta el vendedor.'],
+    ['vendedorId: -1', datosBase({ vendedorId: -1 }), 'Falta el vendedor.'],
+    ['vendedorId: 1.5', datosBase({ vendedorId: 1.5 }), 'Falta el vendedor.'],
+    ['tipoDocumento: 5', datosBase({ tipoDocumento: 5 }), 'Elige el tipo de documento: DI, RT o PA.'],
+    ['tipoDocumento: "di"', datosBase({ tipoDocumento: 'di' }), 'Elige el tipo de documento: DI, RT o PA.'],
+    ['nombre: 123', datosBase({ nombre: 123 }), MENSAJE_GENERAL],
+    ['numeroDocumento: 999123456', datosBase({ numeroDocumento: 999123456 }), MENSAJE_GENERAL],
+    ['correo: 5', datosBase({ correo: 5 }), 'El correo no es válido.'],
+    ['cuerpo nulo', null, MENSAJE_GENERAL],
+    ['cuerpo que es un arreglo', [datosBase()], MENSAJE_GENERAL],
+  ])('con %s el error es el mensaje aprobado que corresponde', (_caso, cuerpo, mensaje) => {
+    expect(errorDe(cuerpo)).toBe(mensaje);
+    expect(MENSAJES).toContain(mensaje);
   });
 });
 

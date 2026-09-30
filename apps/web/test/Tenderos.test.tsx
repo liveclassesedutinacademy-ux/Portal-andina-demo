@@ -30,10 +30,11 @@ function renderizar(entrada: string | { pathname: string; state: unknown }) {
 }
 
 describe('Tenderos', () => {
-  it('muestra «Tendero registrado» al volver del registro y carga la lista (CA25)', async () => {
+  it('muestra «Tendero registrado» al volver del registro y pide la lista del vendedor (CA25)', async () => {
     renderizar({ pathname: '/tenderos', state: { mensaje: 'Tendero registrado' } });
     expect(screen.getByRole('status')).toHaveTextContent('Tendero registrado');
     expect(await screen.findByText('Tienda Prueba Norte')).toBeInTheDocument();
+    expect(fetch).toHaveBeenCalledWith('/api/tenderos?vendedorId=1', expect.anything());
   });
 
   it('si la lista no carga, muestra el error de la API', async () => {

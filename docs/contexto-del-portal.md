@@ -26,7 +26,7 @@ El vendedor entra con su código (por ejemplo, `V-101`). En este sprint el ingre
 | Ingreso del vendedor | Hecho. Sesión simulada con el código del vendedor. |
 | Catálogo | Hecho. Lista de productos con filtro por categoría; no muestra precios. |
 | Tenderos de la zona | Hecho, solo lectura. Lista de los tenderos de la zona del vendedor. |
-| Registro de tenderos | Por construir en este sprint. |
+| Registro de tenderos | Hecho. El vendedor registra un tendero desde la lista de tenderos (HU-101). |
 | Edición de datos del tendero | Por construir en este sprint. La pantalla existe, pero no valida los datos ni guarda los cambios. |
 
 ## 4. Arquitectura
@@ -54,6 +54,7 @@ Navegador ──> apps/web (React + Vite, puerto 5173)
 | `GET /api/catalogo?categoria=` | Lista los productos, con filtro opcional. | — |
 | `GET /api/tenderos?vendedorId=` | Lista los tenderos de la zona del vendedor. | 400 si falta o no es un número; 404 si el vendedor no existe. |
 | `GET /api/tenderos/:id` | Devuelve un tendero. | 400 si el id no es un número; 404 si no existe. |
+| `POST /api/tenderos` | Recibe `{ vendedorId, tipoDocumento, numeroDocumento, nombre, nombreTienda, telefono, correo, direccion }` (el correo es opcional) y crea el tendero con la zona del vendedor y estado `activo`; ignora `zona` y `estado` si llegan en el cuerpo. Guarda el documento normalizado. Devuelve 201 con `{ tendero }`. | 400 si los datos no son válidos, con el mensaje del primer campo que falla en el orden del formulario; 404 si el vendedor no existe; 409 si ya existe un tendero con ese tipo y número de documento (con el mensaje de inactivo solo si ese tendero está inactivo y es de la zona del vendedor). |
 
 ## 5. Datos del tendero
 
@@ -70,7 +71,7 @@ Navegador ──> apps/web (React + Vite, puerto 5173)
 | Vendedor | Vendedor que atiende la tienda. |
 | Estado | `activo` o `inactivo`. |
 
-En la base, la tabla `tenderos` no tiene hoy ninguna restricción que impida repetir un documento.
+En la base, el índice único `tenderos_documento_unico` (migración 002) impide repetir en la tabla `tenderos` el mismo tipo y número de documento.
 
 ## 6. Reglas de negocio conocidas
 

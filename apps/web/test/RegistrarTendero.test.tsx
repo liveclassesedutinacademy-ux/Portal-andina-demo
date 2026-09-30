@@ -75,7 +75,7 @@ describe('RegistrarTendero', () => {
     expect(cuerpo).toMatchObject({ tipoDocumento, numeroDocumento });
   });
 
-  it('ante un duplicado muestra el mensaje de la API y conserva lo escrito (CA22, CA13)', async () => {
+  it('ante un duplicado muestra el mensaje de la API y conserva lo escrito (CA22)', async () => {
     simularRespuesta(409, { error: 'Este tendero ya está registrado.' });
     const usuario = await llenarDatosBase('999.123.456');
     await usuario.click(screen.getByRole('button', { name: 'Guardar' }));
@@ -90,7 +90,8 @@ describe('RegistrarTendero', () => {
     expect(screen.getByLabelText('Dirección')).toHaveValue('Dirección de prueba 1');
   });
 
-  it('ante un DI inválido muestra el mensaje de la API (CA5)', async () => {
+  // El mensaje lo decide la API (CA5 se prueba allí); aquí solo se comprueba que el formulario lo muestra (PT6).
+  it('ante un 400 muestra el mensaje de la API y conserva lo escrito (PT6)', async () => {
     simularRespuesta(400, { error: 'El documento de identidad debe tener de 6 a 10 dígitos.' });
     const usuario = await llenarDatosBase('99912');
     await usuario.click(screen.getByRole('button', { name: 'Guardar' }));
@@ -99,20 +100,46 @@ describe('RegistrarTendero', () => {
     expect(screen.getByLabelText('Número de documento')).toHaveValue('99912');
   });
 
-  it('al guardar con éxito vuelve a la lista con «Tendero registrado» (CA25)', async () => {
-    const tendero = {
+  it('al volver a guardar muestra solo el mensaje nuevo de la API', async () => {
+    const fetchSimulado = vi.fn(async (_ruta: string, _opciones?: RequestInit) =>
+      new Response(JSON.stringify({ error: 'Este tendero ya está registrado.' }), { status: 409 }),
+    );
+    fetchSimulado.mockImplementationOnce(async () =>
+      new Response(JSON.stringify({ error: 'El documento de identidad debe tener de 6 a 10 dígitos.' }), { status: 400 }),
+    );
+    vi.stubGlobal('fetch', fetchSimulado);
+    const usuario = await llenarDatosBase('99912');
+    await usuario.click(screen.getByRole('button', { name: 'Guardar' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('El documento de identidad debe tener de 6 a 10 dígitos.');
+
+    await usuario.clear(screen.getByLabelText('Número de documento'));
+    await usuario.type(screen.getByLabelText('Número de documento'), '999.123.456');
+    await usuario.click(screen.getByRole('button', { name: 'Guardar' }));
+    expect(await screen.findByText('Este tendero ya está registrado.')).toBeInTheDocument();
+    expect(screen.getAllByRole('alert')).toHaveLength(1);
+    expect(screen.queryByText('El documento de identidad debe tener de 6 a 10 dígitos.')).not.toBeInTheDocument();
+  });
+
+  it('al guardar con éxito vuelve a la lista con «Tendero registrado» y la recarga con el tendero nuevo (CA25)', async () => {
+    // Tendero 1 de test-data/ (zona Norte) y el tendero nuevo con los datos válidos base de la historia.
+    const existente = {
+      id: 1, tipoDocumento: 'DI', numeroDocumento: '999100137', nombre: 'Ana Prueba', nombreTienda: 'Tienda La Esquina',
+      telefono: '555-0101', correo: 'tienda1@ejemplo.test', direccion: 'Calle Ficticia 3 n.º 11', zona: 'Norte', vendedorId: 1, estado: 'activo',
+    };
+    const nuevo = {
       id: 16, tipoDocumento: 'DI', numeroDocumento: '999124011', nombre: 'Prueba Norte', nombreTienda: 'Tienda Prueba Norte',
       telefono: '5550000001', correo: 'prueba@ejemplo.test', direccion: 'Dirección de prueba 1', zona: 'Norte', vendedorId: 1, estado: 'activo',
     };
-    // POST /api/tenderos responde 201; GET /api/tenderos devuelve la lista con el tendero nuevo.
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async (_ruta: string, opciones?: RequestInit) =>
-        opciones?.method === 'POST'
-          ? new Response(JSON.stringify({ tendero }), { status: 201 })
-          : new Response(JSON.stringify({ tenderos: [tendero] }), { status: 200 }),
-      ),
-    );
+    // La API simulada guarda estado: GET solo devuelve el tendero nuevo si antes llegó el POST.
+    let registrado = false;
+    const fetchSimulado = vi.fn(async (_ruta: string, opciones?: RequestInit) => {
+      if (opciones?.method === 'POST') {
+        registrado = true;
+        return new Response(JSON.stringify({ tendero: nuevo }), { status: 201 });
+      }
+      return new Response(JSON.stringify({ tenderos: registrado ? [existente, nuevo] : [existente] }), { status: 200 });
+    });
+    vi.stubGlobal('fetch', fetchSimulado);
     const usuario = userEvent.setup();
     render(
       <MemoryRouter initialEntries={['/tenderos/nuevo']}>
@@ -133,6 +160,12 @@ describe('RegistrarTendero', () => {
     expect(await screen.findByRole('status')).toHaveTextContent('Tendero registrado');
     expect(screen.getByRole('heading', { name: 'Tenderos de la zona Norte' })).toBeInTheDocument();
     expect(await screen.findByText('Tienda Prueba Norte')).toBeInTheDocument();
+    expect(screen.getByText('Tienda La Esquina')).toBeInTheDocument();
+    // La lista se pidió después del POST, no antes.
+    expect(fetchSimulado.mock.calls.map(([ruta, opciones]) => `${opciones?.method ?? 'GET'} ${ruta}`)).toEqual([
+      'POST /api/tenderos',
+      'GET /api/tenderos?vendedorId=1',
+    ]);
   });
 
   it('marca como obligatorios todos los campos menos el correo, con máximo 100 caracteres (PT6)', () => {

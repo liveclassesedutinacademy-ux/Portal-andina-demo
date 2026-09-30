@@ -16,8 +16,8 @@ const MENSAJE = {
 } as const;
 
 /**
- * Texto para las reglas que no tienen mensaje aprobado: número de documento vacío o que no es texto,
- * campo de texto con otro tipo de dato y cuerpo que no es un objeto. Se reemplaza cuando se apruebe su texto.
+ * Mensaje general aprobado en D10 para los casos sin mensaje propio: número de documento vacío o que no es texto,
+ * campo de texto con otro tipo de dato y cuerpo que no es un objeto.
  */
 export const MENSAJE_GENERAL = 'Revisa los datos del tendero.';
 

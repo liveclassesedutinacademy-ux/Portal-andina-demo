@@ -47,6 +47,10 @@ describe('RT', () => {
     expect(validarDocumento('RT', '999 000 024-4')).toEqual({ valido: true, numero: '999000024-4' });
   });
 
+  it('quita los puntos: 999.000.024-4 → 999000024-4 (anexo)', () => {
+    expect(validarDocumento('RT', '999.000.024-4')).toEqual({ valido: true, numero: '999000024-4' });
+  });
+
   it('calcula el dígito de control del anexo', () => {
     expect(digitoControlRT('999123456')).toBe(1);
     expect(digitoControlRT('999000013')).toBe(0); // residuo 10
@@ -63,6 +67,13 @@ describe('PA', () => {
   it('pasa a mayúsculas: 999abc → 999ABC (CA11, P11 b)', () => {
     expect(normalizarDocumento('PA', '999abc')).toBe('999ABC');
     expect(validarDocumento('PA', '999abc')).toEqual({ valido: true, numero: '999ABC' });
+  });
+
+  it.each([
+    ['999 aBc', '999ABC'],
+    ['999.abc.def', '999ABCDEF'],
+  ])('quita espacios y puntos y pasa a mayúsculas: %s → %s (anexo, P11 b)', (numero, normalizado) => {
+    expect(validarDocumento('PA', numero)).toEqual({ valido: true, numero: normalizado });
   });
 
   it.each(['999AB', '999ABCDEFG', '999ÁBC', '999AB-C'])('rechaza %s (CA10)', (numero) => {

@@ -144,6 +144,7 @@ La tabla de endpoints de `docs/contexto-del-portal.md` ya incluye el `PUT`, como
 
 Lo que consta en el repositorio:
 - **Commits con Claude.** Los commits de los pasos 1, 2 y 3 (`f95526e`, `458e219`, `021b2d7`) y el de ajustes de la revisión (`b118d04`) llevan `Co-Authored-By: Claude Opus 5.5`. El commit de pruebas (`00e55ac`) lo firma Claude como autor, con el mismo trailer. El commit de aprobaciones de mensajes (`a73a899`) lleva `Co-Authored-By: Claude Sonnet 4.6`.
+- **Commits de la revisión (PR #2).** Tras la revisión del profesor (cuenta `edutinacademyteacher-dot`: «Request changes» y 3 comentarios en línea), Claude hizo la unión con `hu-101-registro-tenderos` (`f021aa9`) y los commits `7bb15bc` (tabla de endpoints), `fb10af4` (`zonaDelVendedor`) y `ed3eef1` (cifras de esta descripción). Cada uno cita el comentario que atiende. El comentario 2 solo pedía una respuesta y no cambió código.
 - **Commit sin trailer.** El commit de la historia, las respuestas, el plan y las decisiones (`d3bb4b2`) no lleva trailer de Claude.
 - **Corrección del código generado.** `b118d04` quita el tipo `EdicionTendero`, que no se usaba (código muerto), y agrega la prueba del `PUT` con los 5 campos válidos más solo `numeroDocumento`.
 - **Comprobación de las pruebas.** `docs/planes/HU-102-pruebas.md` relaciona cada criterio con sus pruebas y registra 4 mutaciones manuales que las pruebas detectan.

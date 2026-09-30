@@ -1,0 +1,18 @@
+{
+  "name": "portal-andina",
+  "private": true,
+  "description": "Portal Andina · repositorio de práctica del curso Desarrollo de software asistido por IA (Edutin Academy). Empresas y datos ficticios.",
+  "workspaces": ["apps/api", "apps/web"],
+  "engines": { "node": ">=22.13" },
+  "scripts": {
+    "dev": "concurrently -n api,web -c blue,green \"npm run dev -w apps/api\" \"npm run dev -w apps/web\"",
+    "test": "npm test -w apps/api && npm test -w apps/web",
+    "test:e2e": "playwright test",
+    "lint": "npm run lint -w apps/api && npm run lint -w apps/web",
+    "db:reset": "npm run db:reset -w apps/api"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.0",
+    "concurrently": "^9.2.0"
+  }
+}

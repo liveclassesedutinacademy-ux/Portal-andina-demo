@@ -46,6 +46,23 @@ describe('Tenderos', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Vendedor no encontrado');
   });
 
+  it('muestra «Datos actualizados» y el teléfono nuevo al volver de la edición (CA18)', async () => {
+    // «Tienda La Esquina» de test-data/ con el teléfono de CA2.
+    const esquina = {
+      id: 1, tipoDocumento: 'DI', numeroDocumento: '999100137', nombre: 'Ana Prueba', nombreTienda: 'Tienda La Esquina',
+      telefono: '5559876543', correo: 'tienda1@ejemplo.test', direccion: 'Calle Ficticia 3 n.º 11', zona: 'Norte', vendedorId: 1, estado: 'activo',
+    };
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ tenderos: [esquina] }), { status: 200 })));
+    render(
+      <MemoryRouter initialEntries={[{ pathname: '/tenderos', state: { mensaje: 'Datos actualizados' } }]}>
+        <Tenderos />
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole('status')).toHaveTextContent('Datos actualizados');
+    const fila = (await screen.findByText('Tienda La Esquina')).closest('tr');
+    expect(fila).toHaveTextContent('5559876543');
+  });
+
   it('sin ese estado no muestra el mensaje', async () => {
     renderizar('/tenderos');
     expect(await screen.findByText('Tienda Prueba Norte')).toBeInTheDocument();

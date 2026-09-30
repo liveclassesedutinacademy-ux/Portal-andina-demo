@@ -224,6 +224,16 @@ describe('PUT /api/tenderos/:id', () => {
     expect(await leerTendero(app, 7)).toEqual(antes);
   });
 
+  it('no edita un tendero activo de otra zona aunque el cuerpo sea válido (CA9)', async () => {
+    const { app, db } = appDePrueba();
+    const vendedorId = await idVendedor(app, 'V-101');
+    const antes = db.prepare('SELECT * FROM tenderos WHERE id = ?').get(7);
+    const res = await editar(app, '7', { vendedorId }).send(await edicionDe(app, 7, { telefono: '5551112222' }));
+    expect(res.status).toBe(403);
+    expect(res.body).toEqual({ error: 'Este tendero no es de tu zona.' });
+    expect(db.prepare('SELECT * FROM tenderos WHERE id = ?').get(7)).toEqual(antes);
+  });
+
   it('no edita un tendero inactivo de la zona (CA16)', async () => {
     const { app, db } = appDePrueba();
     const id = crearTenderoInactivo(db, 'Norte', 1, '999199001');

@@ -50,7 +50,7 @@ export const api = {
   tendero: (id: number) => llamar<{ tendero: Tendero }>(`/api/tenderos/${id}`),
   registrarTendero: (datos: DatosRegistroTendero) =>
     llamar<{ tendero: Tendero }>('/api/tenderos', { method: 'POST', body: JSON.stringify(datos) }),
-  // El endpoint de edición todavía no existe: lo construye la historia «edición de datos del tendero».
-  actualizarTendero: (id: number, datos: DatosEdicionTendero) =>
-    llamar<{ tendero: Tendero }>(`/api/tenderos/${id}`, { method: 'PUT', body: JSON.stringify(datos) }),
+  // Edición (HU-102): el vendedor va en la consulta, igual que en la lista de tenderos.
+  actualizarTendero: (id: number, datos: DatosEdicionTendero, vendedorId: number) =>
+    llamar<{ tendero: Tendero }>(`/api/tenderos/${id}?vendedorId=${vendedorId}`, { method: 'PUT', body: JSON.stringify(datos) }),
 };

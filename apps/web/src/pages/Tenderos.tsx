@@ -7,7 +7,7 @@ export function Tenderos() {
   const { vendedor } = useSesion();
   const [tenderos, setTenderos] = useState<Tendero[]>([]);
   const [error, setError] = useState<string | null>(null);
-  // Mensaje que deja el registro de un tendero al volver a la lista (HU-101, P9 a).
+  // Mensaje que deja el registro (HU-101, P9 a) o la edición (HU-102, P7) de un tendero al volver a la lista.
   const mensaje = (useLocation().state as { mensaje?: string } | null)?.mensaje;
 
   useEffect(() => {

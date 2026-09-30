@@ -16,6 +16,17 @@ export type Tendero = {
   estado: string;
 };
 export type DatosEdicionTendero = Pick<Tendero, 'nombre' | 'nombreTienda' | 'telefono' | 'correo' | 'direccion'>;
+export type TipoDocumento = 'DI' | 'RT' | 'PA';
+export type DatosRegistroTendero = {
+  vendedorId: number;
+  tipoDocumento: TipoDocumento;
+  numeroDocumento: string;
+  nombre: string;
+  nombreTienda: string;
+  telefono: string;
+  correo: string;
+  direccion: string;
+};
 
 export class ErrorApi extends Error {
   constructor(public estado: number, mensaje: string) {
@@ -37,6 +48,8 @@ export const api = {
     llamar<{ productos: Producto[] }>(`/api/catalogo${categoria ? `?categoria=${encodeURIComponent(categoria)}` : ''}`),
   tenderos: (vendedorId: number) => llamar<{ tenderos: Tendero[] }>(`/api/tenderos?vendedorId=${vendedorId}`),
   tendero: (id: number) => llamar<{ tendero: Tendero }>(`/api/tenderos/${id}`),
+  registrarTendero: (datos: DatosRegistroTendero) =>
+    llamar<{ tendero: Tendero }>('/api/tenderos', { method: 'POST', body: JSON.stringify(datos) }),
   // El endpoint de edición todavía no existe: lo construye la historia «edición de datos del tendero».
   actualizarTendero: (id: number, datos: DatosEdicionTendero) =>
     llamar<{ tendero: Tendero }>(`/api/tenderos/${id}`, { method: 'PUT', body: JSON.stringify(datos) }),

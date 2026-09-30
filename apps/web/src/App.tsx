@@ -4,6 +4,7 @@ import { Ingreso } from './pages/Ingreso';
 import { Catalogo } from './pages/Catalogo';
 import { Tenderos } from './pages/Tenderos';
 import { EditarTendero } from './pages/EditarTendero';
+import { RegistrarTendero } from './pages/RegistrarTendero';
 
 function Encabezado() {
   const { vendedor, salir } = useSesion();
@@ -36,6 +37,7 @@ export function App() {
           <Route path="/" element={<Ingreso />} />
           <Route path="/catalogo" element={<Protegida><Catalogo /></Protegida>} />
           <Route path="/tenderos" element={<Protegida><Tenderos /></Protegida>} />
+          <Route path="/tenderos/nuevo" element={<Protegida><RegistrarTendero /></Protegida>} />
           <Route path="/tenderos/:id/editar" element={<Protegida><EditarTendero /></Protegida>} />
         </Routes>
       </main>

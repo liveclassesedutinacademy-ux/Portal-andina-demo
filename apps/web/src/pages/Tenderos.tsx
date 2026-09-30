@@ -1,19 +1,30 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { api, type Tendero } from '../lib/api';
 import { useSesion } from '../lib/sesion';
 
 export function Tenderos() {
   const { vendedor } = useSesion();
   const [tenderos, setTenderos] = useState<Tendero[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  // Mensaje que deja el registro de un tendero al volver a la lista (HU-101, P9 a).
+  const mensaje = (useLocation().state as { mensaje?: string } | null)?.mensaje;
 
   useEffect(() => {
-    if (vendedor) api.tenderos(vendedor.id).then((r) => setTenderos(r.tenderos));
+    if (!vendedor) return;
+    setError(null);
+    api
+      .tenderos(vendedor.id)
+      .then((r) => setTenderos(r.tenderos))
+      .catch((err) => setError(err instanceof Error ? err.message : 'No se pudo cargar la lista de tenderos'));
   }, [vendedor]);
 
   return (
     <section>
       <h1>Tenderos de la zona {vendedor?.zona}</h1>
+      {mensaje && <p role="status">{mensaje}</p>}
+      {error && <p role="alert" className="error">{error}</p>}
+      <Link to="/tenderos/nuevo">Registrar tendero</Link>
       <table>
         <thead><tr><th>Tienda</th><th>Tendero</th><th>Documento</th><th>Teléfono</th><th></th></tr></thead>
         <tbody>

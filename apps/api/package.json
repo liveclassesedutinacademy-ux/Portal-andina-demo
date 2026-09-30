@@ -1,0 +1,25 @@
+{
+  "name": "@portal-andina/api",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --disable-warning=ExperimentalWarning src/server.ts",
+    "start": "tsx --disable-warning=ExperimentalWarning src/server.ts",
+    "test": "vitest run",
+    "lint": "tsc --noEmit",
+    "db:reset": "tsx --disable-warning=ExperimentalWarning src/scripts/reset-db.ts"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "zod": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/node": "^22.15.0",
+    "@types/supertest": "^6.0.3",
+    "supertest": "^7.1.0",
+    "tsx": "^4.20.0",
+    "typescript": "~5.9.2",
+    "vitest": "^5.0.2"
+  }
+}

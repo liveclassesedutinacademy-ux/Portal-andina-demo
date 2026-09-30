@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(**/.env)",
+      "Read(**/.env.*)",
+      "Read(**/config/env/**)",
+      "Read(**/secrets/**)",
+      "Read(**/.aws/**)",
+      "Read(**/*.pem)",
+      "Read(**/*.key)",
+      "Read(**/*.p12)",
+      "Read(**/*.pfx)",
+      "Read(**/api/examples/**)",
+      "Read(**/*.log)",
+      "Read(**/logs/**)",
+      "Read(**/*.bak)",
+      "Read(**/*.backup)",
+      "Read(**/*.dump)",
+      "Read(**/*.xlsx)",
+      "Read(**/*.xls)",
+      "Read(**/*.mp4)",
+      "Read(**/*.m4a)",
+      "Read(**/*.mp3)",
+      "Read(**/*.wav)",
+      "Read(**/*.vtt)",
+      "Read(**/*.srt)",
+      "Read(**/*.docx)",
+      "Read(**/*.pdf)"
+    ]
+  }
+}

@@ -1,0 +1,86 @@
+[
+  {
+    "id": 1,
+    "sku": "AB-001",
+    "nombre": "Arroz blanco",
+    "categoria": "Abarrotes",
+    "presentacion": "Bolsa 1 kg"
+  },
+  {
+    "id": 2,
+    "sku": "AB-002",
+    "nombre": "Aceite vegetal",
+    "categoria": "Abarrotes",
+    "presentacion": "Botella 1 L"
+  },
+  {
+    "id": 3,
+    "sku": "AB-003",
+    "nombre": "Azúcar",
+    "categoria": "Abarrotes",
+    "presentacion": "Bolsa 1 kg"
+  },
+  {
+    "id": 4,
+    "sku": "AB-004",
+    "nombre": "Pasta larga",
+    "categoria": "Abarrotes",
+    "presentacion": "Paquete 500 g"
+  },
+  {
+    "id": 5,
+    "sku": "BE-001",
+    "nombre": "Agua sin gas",
+    "categoria": "Bebidas",
+    "presentacion": "Botella 600 ml"
+  },
+  {
+    "id": 6,
+    "sku": "BE-002",
+    "nombre": "Jugo de naranja",
+    "categoria": "Bebidas",
+    "presentacion": "Caja 1 L"
+  },
+  {
+    "id": 7,
+    "sku": "BE-003",
+    "nombre": "Café molido",
+    "categoria": "Bebidas",
+    "presentacion": "Bolsa 250 g"
+  },
+  {
+    "id": 8,
+    "sku": "AS-001",
+    "nombre": "Jabón de barra",
+    "categoria": "Aseo",
+    "presentacion": "Unidad 250 g"
+  },
+  {
+    "id": 9,
+    "sku": "AS-002",
+    "nombre": "Detergente en polvo",
+    "categoria": "Aseo",
+    "presentacion": "Bolsa 1 kg"
+  },
+  {
+    "id": 10,
+    "sku": "AS-003",
+    "nombre": "Papel higiénico",
+    "categoria": "Aseo",
+    "presentacion": "Paquete x4"
+  },
+  {
+    "id": 11,
+    "sku": "SN-001",
+    "nombre": "Galletas de sal",
+    "categoria": "Snacks",
+    "presentacion": "Paquete x6"
+  },
+  {
+    "id": 12,
+    "sku": "SN-002",
+    "nombre": "Maní salado",
+    "categoria": "Snacks",
+    "presentacion": "Bolsa 100 g"
+  }
+]

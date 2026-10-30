@@ -2,7 +2,7 @@
 /**
  * Validación de la documentación del Portal Andina.
  *
- * Comprueba cinco cosas que se rompen solas cuando el código cambia y la
+ * Comprueba siete cosas que se rompen solas cuando el código cambia y la
  * documentación no. No revisa la redacción: revisa que lo que la documentación
  * afirma siga existiendo en el código.
  *
@@ -13,6 +13,9 @@
  *   C3 · Mensajes      Todo mensaje de error literal de la API aparece en algún documento.
  *   C4 · Decisiones    Todo ADR de docs/decisiones está en el índice del README.
  *   C5 · Migraciones   Toda migración de apps/api/migrations se menciona en docs/.
+ *   C6 · Parámetros    Todo `req.query.<nombre>` que lea la API está en la tabla de
+ *                      endpoints de docs/contexto-del-portal.md.
+ *   C7 · Rutas web     Toda ruta de apps/web/src/App.tsx está documentada en docs/.
  *
  * Uso:  node scripts/validar-documentacion.mjs [--json]
  * Sale con código 1 si hay algún incumplimiento.

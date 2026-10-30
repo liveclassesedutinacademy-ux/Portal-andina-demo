@@ -1,6 +1,7 @@
 import { Router, type Request } from 'express';
 import type { BaseDeDatos } from '../db.js';
-import { esquemaEdicionTendero, esquemaRegistroTendero, primerError } from '../validaciones/tendero.js';
+import { esquemaEdicionTendero, esquemaRegistroTendero, MENSAJE_GENERAL, primerError } from '../validaciones/tendero.js';
+import { comparable, esquemaBusqueda } from '../validaciones/busqueda.js';
 
 const COLUMNAS = `id, tipo_documento AS tipoDocumento, numero_documento AS numeroDocumento, nombre,
   nombre_tienda AS nombreTienda, telefono, correo, direccion, zona, vendedor_id AS vendedorId, estado`;
@@ -28,8 +29,10 @@ function zonaDelVendedor(
 
 export function rutasTenderos(db: BaseDeDatos) {
   const router = Router();
+  // Compara nombres de tienda sin mayúsculas ni tildes dentro de la consulta (HU-103, P6: sin columna nueva).
+  db.function('comparable', { deterministic: true }, (texto) => (typeof texto === 'string' ? comparable(texto) : texto));
 
-  // Tenderos de la zona del vendedor.
+  // Tenderos de la zona del vendedor; con `?buscar=` de 3 o más caracteres, solo los que coinciden (HU-103).
   router.get('/', (req, res) => {
     const vendedor = zonaDelVendedor(db, req);
     if (!vendedor.ok) {
@@ -37,7 +40,16 @@ export function rutasTenderos(db: BaseDeDatos) {
       else res.status(404).json({ error: 'Vendedor no encontrado' });
       return;
     }
-    const tenderos = db.prepare(`SELECT ${COLUMNAS} FROM tenderos WHERE zona = ? ORDER BY nombre_tienda`).all(vendedor.zona);
+    const busqueda = esquemaBusqueda.safeParse(req.query.buscar);
+    if (!busqueda.success) {
+      res.status(400).json({ error: MENSAJE_GENERAL });
+      return;
+    }
+    const tenderos = busqueda.data
+      ? db
+          .prepare(`SELECT ${COLUMNAS} FROM tenderos WHERE zona = ? AND instr(comparable(nombre_tienda), ?) > 0 ORDER BY nombre_tienda`)
+          .all(vendedor.zona, busqueda.data)
+      : db.prepare(`SELECT ${COLUMNAS} FROM tenderos WHERE zona = ? ORDER BY nombre_tienda`).all(vendedor.zona);
     res.json({ tenderos });
   });
 

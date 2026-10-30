@@ -227,10 +227,11 @@ Ayudas de prueba de la API: `appDePrueba()` (base en memoria con `test-data/`), 
 | `apps/web/test/EditarTendero.test.tsx` | Componente (fetch simulado) | 3 | Solo la carga de los 5 campos; **no prueba guardar** |
 | `e2e/registro-tendero.spec.ts` | Extremo a extremo | 2 | Registro y vuelta a la lista; duplicado con puntos |
 | `e2e/navegacion.spec.ts` | Extremo a extremo | 2 (1 del módulo) | Ingreso y apertura de la lista de la zona Norte |
+| `e2e/busqueda-tenderos.spec.ts` | Extremo a extremo | 3 | HU-103 con los datos de prueba de la historia: «esq», «ROBLE», «dona», «ésq», «jose», «pinos» para V-101 y V-102; lista completa con 0, 1 y 2 caracteres, sin tiendas de otras zonas |
 
 Fuera del módulo, la corrida incluye `catalogo.test.ts` (2) y `sesion.test.ts` (3). Los conteos por archivo salen de `npx vitest run --reporter=verbose` en `apps/api` y `apps/web`.
 
-### Salida real de la última corrida (30-10-2026, rama `hu-103-busqueda-tenderos`, paso 3 de HU-103: la API y la web, sin e2e de la búsqueda; Node v22.23.4)
+### Salida real de la última corrida (30-10-2026, rama `hu-103-busqueda-tenderos`, paso 4 de HU-103: la API, la web y el e2e de la búsqueda; Node v22.23.4)
 
 `npm test`:
 
@@ -245,8 +246,8 @@ Fuera del módulo, la corrida incluye `catalogo.test.ts` (2) y `sesion.test.ts` 
 
  Test Files  8 passed (8)
       Tests  240 passed (240)
-   Start at  15:13:15
-   Duration  422ms (import 49%, transform 29%, tests 21%, worker 1%)
+   Start at  15:14:42
+   Duration  403ms (import 49%, transform 29%, tests 21%, worker 1%)
 
 > test
 > vitest run
@@ -255,8 +256,8 @@ Fuera del módulo, la corrida incluye `catalogo.test.ts` (2) y `sesion.test.ts` 
 
  Test Files  4 passed (4)
       Tests  25 passed (25)
-   Start at  15:13:16
-   Duration  2.47s (tests 51%, environment 32%, import 7%, transform 5%, setup 5%)
+   Start at  15:14:42
+   Duration  2.47s (tests 45%, environment 37%, import 7%, setup 5%, transform 5%)
 ```
 
 `npm run lint` (sin errores; `tsc` no imprime nada cuando pasa):
@@ -278,17 +279,20 @@ Fuera del módulo, la corrida incluye `catalogo.test.ts` (2) y `sesion.test.ts` 
 > test:e2e
 > playwright test
 
-Running 4 tests using 2 workers
+Running 7 tests using 3 workers
 
-  ✓  1 [chromium] › e2e/navegacion.spec.ts:3:5 › el vendedor ingresa, consulta el catálogo y ve los tenderos de su zona (1.0s)
-  ✓  2 [chromium] › e2e/registro-tendero.spec.ts:28:5 › CA25 y CA2: registra un tendero y vuelve a la lista con «Tendero registrado» (1.2s)
-  ✓  3 [chromium] › e2e/navegacion.spec.ts:19:5 › un código de vendedor desconocido muestra un error (274ms)
-  ✓  4 [chromium] › e2e/registro-tendero.spec.ts:40:5 › CA22 y CA13: un DI repetido con puntos muestra el mensaje y conserva lo escrito (795ms)
+  ✓  1 [chromium] › e2e/navegacion.spec.ts:3:5 › el vendedor ingresa, consulta el catálogo y ve los tenderos de su zona (796ms)
+  ✓  3 [chromium] › e2e/busqueda-tenderos.spec.ts:31:5 › CA1 a CA3: V-101 busca por nombre de tienda sin distinguir mayúsculas ni tildes (953ms)
+  ✓  2 [chromium] › e2e/registro-tendero.spec.ts:28:5 › CA25 y CA2: registra un tendero y vuelve a la lista con «Tendero registrado» (965ms)
+  ✓  4 [chromium] › e2e/navegacion.spec.ts:19:5 › un código de vendedor desconocido muestra un error (285ms)
+  ✓  5 [chromium] › e2e/busqueda-tenderos.spec.ts:63:5 › CA4 y CA5: «pinos» no devuelve nada para V-101 (es de la zona Sur) y sí para V-102 (571ms)
+  ✓  6 [chromium] › e2e/registro-tendero.spec.ts:40:5 › CA22 y CA13: un DI repetido con puntos muestra el mensaje y conserva lo escrito (853ms)
+  ✓  7 [chromium] › e2e/busqueda-tenderos.spec.ts:75:5 › CA2: V-102 encuentra «Tienda San José» escribiendo «jose», sin tilde (327ms)
 
-  4 passed (4.0s)
+  7 passed (4.0s)
 ```
 
-Nada falló. Ninguna prueba e2e cubre la edición ni la búsqueda.
+Nada falló. Ninguna prueba e2e cubre la edición. No se pudo comprobar si había servidores levantados en 3001 o 5173 durante esta corrida (PC-15; ver Dudas).
 
 ---
 
@@ -299,7 +303,10 @@ Criterio: «hecho» solo si una prueba e2e la recorre de punta a punta (web → 
 | Funcionalidad | Estado | Evidencia | Qué falta |
 |---|---|---|---|
 | Ver la lista de tenderos de la zona | Parcial | e2e `navegacion.spec.ts:14-16` y `registro-tendero.spec.ts:33-37` comprueban que la lista carga y que aparece un tendero recién registrado. El título «Tenderos de la zona Norte» sale de la sesión (`Tenderos.tsx:43`), no de la API. El filtro por zona solo lo prueba la API (`tenderos.test.ts:6-12`; `registro-tendero.test.ts:44-52`) | Un e2e que compruebe que las filas son de la zona del vendedor y que faltan las de otras zonas (la mitad de CA2 que no se prueba de punta a punta: `HU-101-registro-de-tenderos.md:17`) |
-| Buscar tiendas por nombre (HU-103 CA1 a CA5) | Parcial | API `busqueda-tenderos.test.ts:29-85` (las de CA3, `:59-73`, pasarían también sin HU-103, porque la API ya devolvía la lista completa); componente `BusquedaTenderos.test.tsx:56-156` (fetch simulado) | Un e2e que recorra la búsqueda de punta a punta |
+| Buscar tiendas por nombre: campo, coincidencia sin mayúsculas ni tildes, lista completa con menos de 3 caracteres, mensaje sin resultados y solo la zona (HU-103 CA1 a CA5) | Hecho | e2e `busqueda-tenderos.spec.ts:31-61` (CA1; CA2 con «esq», «ROBLE», «dona» y «ésq»; CA3 con «es», «e» y vacío, comprobando que están las 5 tiendas del Norte y ninguna de otra zona), `:63-73` (CA4 y CA5 con «pinos» para V-101 y V-102) y `:75-79` (CA2 con «jose»); API `busqueda-tenderos.test.ts:29-85` (las de CA3, `:59-73`, pasarían también sin HU-103, porque la API ya devolvía la lista completa); componente `BusquedaTenderos.test.tsx:56-156` | — Las reglas que aplica (ñ como n, espacios de los extremos) son propuestas pendientes de aprobación (R28, R29). CA5 se comprueba con un ejemplo («pinos»); el límite de PC-03 sigue |
+| Búsqueda: espacios de los extremos y texto de solo espacios (P3) | Parcial | API `busqueda-tenderos.test.ts:68-73`; componente `BusquedaTenderos.test.tsx:76-90, 121-130` | Sin e2e |
+| Búsqueda: descartar la respuesta de un texto que ya cambió y no mostrar el mensaje sin búsqueda (P5) | Parcial | Componente `BusquedaTenderos.test.tsx:158-186` (respuesta simulada que llega tarde) | Sin e2e: con la API local las respuestas llegan en orden y no se puede provocar el desorden sin simularlo |
+| Búsqueda: `buscar` repetido responde 400 (P4) | Parcial | API `busqueda-tenderos.test.ts:103-108` | Sin e2e; la web nunca envía `buscar` repetido |
 | Mensaje si la lista no carga | Parcial | `Tenderos.tsx:34`; componente `Tenderos.test.tsx:40-48` (fetch simulado) | Muestra el mensaje de la API, no el texto de D11 (PC-04). Sin e2e |
 | Registrar un tendero válido y volver a la lista con «Tendero registrado» | Hecho | e2e `registro-tendero.spec.ts:28-38`; API `registro-tendero.test.ts:36-59`; componente `RegistrarTendero.test.tsx:123-169` | — |
 | Rechazar un documento duplicado en la zona (incluido escrito con puntos) y conservar lo escrito | Hecho | e2e `registro-tendero.spec.ts:40-58`; API `registro-tendero.test.ts:154-161, 190-211` | — |
@@ -354,4 +361,5 @@ Criterio: «hecho» solo si una prueba e2e la recorre de punta a punta (web → 
 | ¿La regla de correo de la API (`FORMATO_CORREO`, `tendero.ts:32`) acepta los mismos correos que la validación de correo de zod que proponía la opción a) de P9 en la historia? (R16) | La respuesta del product owner describe la regla con palabras y no nombra a zod; comprobarlo exige pasar la misma lista de correos por las dos reglas | Tech lead |
 | ¿Había servidores levantados en los puertos 3001 o 5173 durante la corrida e2e de este documento? | No pude comprobarlo: no se aprobó el comando para ver los puertos ocupados. Si los había, Playwright los reutilizó y escribió en la base local en lugar de en memoria (`playwright.config.ts:20, 26`) | La persona que ejecutó la corrida (quien encargó este documento) |
 | ¿Las pruebas manuales de HU-101 (`docs/planes/HU-101-pruebas-manuales.md` y `docs/capturas/HU-101/`) siguen valiendo? | No se repitieron para este documento y no cuentan como evidencia automática | QA o tech lead |
+| ¿Se aprueban las propuestas P1 a P6 de HU-103 (R27 a R31)? En particular, ¿la ñ cuenta como n al buscar? | La historia no lo dice (`backlog-sprint-1.md:53`); las reglas están implementadas como propuestas (`docs/planes/HU-103-decisiones-propuestas.md`) | Product owner (P2, P3) y tech lead (P1, P4, P5, P6) |
 | ¿Quién mantiene este documento cuando cambie el módulo? | No hay ninguna regla sobre documentación por módulo en `CLAUDE.md` ni en la plantilla de PR | Tech lead |

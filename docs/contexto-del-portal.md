@@ -50,7 +50,7 @@ Navegador ──> apps/web (React + Vite, puerto 5173)
 | Método y ruta | Qué hace | Errores |
 |---|---|---|
 | `GET /api/salud` | Comprueba que la API responde. | — |
-| `POST /api/sesion` | Recibe `{ codigoVendedor }` y devuelve el vendedor. | 400 si falta el código; 401 si no existe. |
+| `POST /api/sesion` | Recibe `{ codigoVendedor }` y devuelve el vendedor. | 400 «Falta el código del vendedor» si falta el código; 401 «Código de vendedor no reconocido» si no existe. |
 | `GET /api/catalogo?categoria=` | Lista los productos, con filtro opcional. | — |
 | `GET /api/tenderos?vendedorId=` | Lista los tenderos de la zona del vendedor. | 400 si falta o no es un número; 404 si el vendedor no existe. |
 | `GET /api/tenderos/:id` | Devuelve un tendero. | 400 si el id no es un número; 404 si no existe. |

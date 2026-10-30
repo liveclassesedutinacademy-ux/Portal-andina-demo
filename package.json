@@ -9,7 +9,8 @@
     "test": "npm test -w apps/api && npm test -w apps/web",
     "test:e2e": "playwright test",
     "lint": "npm run lint -w apps/api && npm run lint -w apps/web",
-    "db:reset": "npm run db:reset -w apps/api"
+    "db:reset": "npm run db:reset -w apps/api",
+    "docs:validar": "node scripts/validar-documentacion.mjs"
   },
   "devDependencies": {
     "@playwright/test": "1.56.0",

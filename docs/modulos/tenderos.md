@@ -124,7 +124,7 @@ Si fallan varios campos se devuelve el primero en el orden `vendedorId, tipoDocu
 
 | Ruta de la web | Componente | Qué hace | Endpoint que llama |
 |---|---|---|---|
-| `/tenderos` | `Tenderos` (`pages/Tenderos.tsx`) | Muestra «Tenderos de la zona X», la tabla Tienda / Tendero / Documento / Teléfono con un enlace «Editar» por fila, el enlace «Registrar tendero» y el mensaje que llega en `location.state` (`Tenderos.tsx:11, 24-41`). Si la carga falla, muestra el mensaje de la API (`Tenderos.tsx:19`) | `GET /api/tenderos?vendedorId=<id de la sesión>` (`Tenderos.tsx:17`, `api.ts:49`) |
+| `/tenderos` | `Tenderos` (`pages/Tenderos.tsx`) | Muestra «Tenderos de la zona X», la tabla Tienda / Tendero / Documento / Teléfono con un enlace «Editar» por fila, el enlace «Registrar tendero» y el mensaje que llega en `location.state` (`Tenderos.tsx:17, 43-62`). Si la carga falla, muestra el mensaje de la API (`Tenderos.tsx:34`). Tiene el campo «Buscar tienda» (`Tenderos.tsx:47-48`): con 3 o más caracteres sin los espacios de los extremos vuelve a pedir la lista con ese texto y muestra solo lo que responde la API (`:19, 26-31`); si no hay ninguna, muestra «No hay tiendas con ese nombre en tu zona» (`:63`). Con menos, pide y muestra la lista completa (R31) | `GET /api/tenderos?vendedorId=<id de la sesión>`, con `&buscar=<texto>` si hay búsqueda (`Tenderos.tsx:26-27`, `api.ts:49`) |
 | `/tenderos/nuevo` | `RegistrarTendero` (`pages/RegistrarTendero.tsx`) | Formulario con tipo (DI por defecto, `RegistrarTendero.tsx:9`), número, nombre, tienda, teléfono, correo y dirección. Solo valida en el navegador con `required` (el tipo y todos los campos menos el correo) y `maxLength=100` (los 6 campos de texto; el selector del tipo no lo tiene) (`RegistrarTendero.tsx:52-74`). Al guardar con éxito vuelve a `/tenderos` con «Tendero registrado» (`:40`); si falla, muestra el mensaje de la API en `role="alert"` y conserva lo escrito (`:41-44, 76`) | `POST /api/tenderos` con el `vendedorId` de la sesión en el cuerpo (`RegistrarTendero.tsx:39`, `api.ts:51-52`) |
 | `/tenderos/:id/editar` | `EditarTendero` (`pages/EditarTendero.tsx`) | Carga los 5 campos editables del tendero (`:17-27`). Los campos no tienen `required` ni `maxLength` (`:47-56`). Al guardar muestra «Datos guardados» o «No se pudo guardar: <mensaje>» en `role="status"` en la misma pantalla (`:32-41, 58`); no vuelve a la lista | `GET /api/tenderos/:id` (`:18`, `api.ts:50`) y `PUT /api/tenderos/:id` **sin** `?vendedorId=` (`:36`, `api.ts:54-55`), que la API responde con 400 `Falta el vendedor.` (`tenderos.ts:125-128`). Ver pendiente PC-01 |
 
@@ -158,12 +158,13 @@ Si fallan varios campos se devuelve el primero en el orden `vendedorId, tipoDocu
 | R22 | No se edita un tendero de otra zona (403) ni uno inactivo (409); un inactivo de otra zona da 403 | `tenderos.ts:137-144` | HU-102 P10 a y P6 b (`HU-102-respuestas-del-product-owner.md:12, 16`); decisión «Orden de las comprobaciones» (`HU-102-decisiones-del-equipo.md:27`) |
 | R23 | En el PUT el vendedor llega en `?vendedorId=`; si falta, no es número o no existe → 400 | `tenderos.ts:20-28, 124-129` | Decisión «Identidad del vendedor» (`HU-102-decisiones-del-equipo.md:26`) |
 | R24 | El formulario de registro solo valida obligatorios y longitud; el resto lo valida la API y el formulario muestra su mensaje | `RegistrarTendero.tsx:20-24, 52-76` | PT6 (`HU-101-decisiones-del-equipo.md:14`) |
-| R25 | Tras registrar, se vuelve a la lista con «Tendero registrado» | `RegistrarTendero.tsx:40`; `Tenderos.tsx:11, 25` | HU-101 P9 a (`HU-101-respuestas-del-product-owner.md:15`) |
+| R25 | Tras registrar, se vuelve a la lista con «Tendero registrado» | `RegistrarTendero.tsx:40`; `Tenderos.tsx:17, 44` | HU-101 P9 a (`HU-101-respuestas-del-product-owner.md:15`) |
 | R26 | Ningún endpoint cambia el estado de un tendero: el registro siempre crea `activo` y el PUT no toca `estado` | `tenderos.ts:75, 151` | HU-101 P6 a (`HU-101-respuestas-del-product-owner.md:12`) para el estado inicial; HU-102 P1 (`HU-102-respuestas-del-product-owner.md:7`) para que el estado no se edite |
 | R27 | La búsqueda filtra en la API, dentro de la consulta por zona: solo recorre los tenderos de la zona del vendedor, activos e inactivos (como la lista, PC-14) | `tenderos.ts:48-52` | HU-103 CA5 (`docs/historias/backlog-sprint-1.md:56`). Que el filtro vaya en la API es la propuesta P1, **pendiente de aprobación** (`docs/planes/HU-103-decisiones-propuestas.md:9`) |
 | R28 | Coincide si el nombre de la tienda contiene el texto, comparando los dos en minúsculas y sin marcas diacríticas: tildes, diéresis y también la de la ñ («dona» encuentra «Doña») | `validaciones/busqueda.ts:10-12`; función de SQLite `comparable` registrada en `tenderos.ts:33` y usada en `:50` | HU-103 CA2 (`backlog-sprint-1.md:53`). Que la ñ cuente como n es la propuesta P2, **pendiente de aprobación** (`HU-103-decisiones-propuestas.md:10`) |
 | R29 | El texto se cuenta sin los espacios de los extremos; con menos de 3 caracteres (o solo espacios) se devuelve la lista completa, sin error | `validaciones/busqueda.ts:19-25`; `tenderos.ts:48` | HU-103 CA3 (`backlog-sprint-1.md:54`). Qué cuenta como carácter es la propuesta P3, **pendiente de aprobación** (`HU-103-decisiones-propuestas.md:11`) |
 | R30 | Un `buscar` que no es texto (parámetro repetido) responde 400 con el mensaje general; no hay límite de longitud | `validaciones/busqueda.ts:20`; `tenderos.ts:43-47` | D10 (`HU-101-decisiones-del-equipo.md:29`) aplicada por la propuesta P4, **pendiente de aprobación** (`HU-103-decisiones-propuestas.md:12`) |
+| R31 | La web no filtra: envía el texto (sin los espacios de los extremos) solo cuando tiene 3 o más caracteres, vuelve a pedir la lista en cada cambio de ese texto, sin espera, y descarta la respuesta de un texto que ya cambió. El mensaje «No hay tiendas con ese nombre en tu zona» solo sale con una búsqueda activa sin resultados | `Tenderos.tsx:7, 19, 21-39, 63` | HU-103 CA3 y CA4 (`backlog-sprint-1.md:54-55`). Cuándo llama a la API es la propuesta P5, **pendiente de aprobación** (`HU-103-decisiones-propuestas.md:13`) |
 
 ---
 
@@ -221,6 +222,7 @@ Ayudas de prueba de la API: `appDePrueba()` (base en memoria con `test-data/`), 
 | `apps/api/test/migraciones.test.ts` | Integración (SQLite) | 3 | Migración 002 e índice único |
 | `apps/api/test/busqueda-tenderos.test.ts` | Unitaria e integración (Supertest) | 14 | HU-103: `comparable` y `GET /api/tenderos?buscar=` (CA2 a CA5, espacios, comillas y comodines, `buscar` repetido) |
 | `apps/web/test/Tenderos.test.tsx` | Componente (fetch simulado) | 4 | Lista, mensaje de `location.state`, error de carga |
+| `apps/web/test/BusquedaTenderos.test.tsx` | Componente (fetch simulado) | 10 | HU-103: campo «Buscar tienda», qué envía a la API, lista completa con menos de 3 caracteres, mensaje sin resultados y descarte de respuestas viejas |
 | `apps/web/test/RegistrarTendero.test.tsx` | Componente (fetch simulado) | 8 | Envío, mensajes de la API, conservar lo escrito, vuelta a la lista |
 | `apps/web/test/EditarTendero.test.tsx` | Componente (fetch simulado) | 3 | Solo la carga de los 5 campos; **no prueba guardar** |
 | `e2e/registro-tendero.spec.ts` | Extremo a extremo | 2 | Registro y vuelta a la lista; duplicado con puntos |
@@ -228,7 +230,7 @@ Ayudas de prueba de la API: `appDePrueba()` (base en memoria con `test-data/`), 
 
 Fuera del módulo, la corrida incluye `catalogo.test.ts` (2) y `sesion.test.ts` (3). Los conteos por archivo salen de `npx vitest run --reporter=verbose` en `apps/api` y `apps/web`.
 
-### Salida real de la última corrida (30-10-2026, rama `hu-103-busqueda-tenderos`, paso 2 de HU-103: la API, sin cambios en la web; Node v22.23.4)
+### Salida real de la última corrida (30-10-2026, rama `hu-103-busqueda-tenderos`, paso 3 de HU-103: la API y la web, sin e2e de la búsqueda; Node v22.23.4)
 
 `npm test`:
 
@@ -243,18 +245,18 @@ Fuera del módulo, la corrida incluye `catalogo.test.ts` (2) y `sesion.test.ts` 
 
  Test Files  8 passed (8)
       Tests  240 passed (240)
-   Start at  15:12:25
-   Duration  429ms (import 56%, transform 22%, tests 20%, worker 1%)
+   Start at  15:13:15
+   Duration  422ms (import 49%, transform 29%, tests 21%, worker 1%)
 
 > test
 > vitest run
 
  RUN  v5.0.2 …/portal-andina/apps/web
 
- Test Files  3 passed (3)
-      Tests  15 passed (15)
-   Start at  15:12:25
-   Duration  2.61s (tests 58%, environment 27%, import 6%, transform 4%, setup 4%)
+ Test Files  4 passed (4)
+      Tests  25 passed (25)
+   Start at  15:13:16
+   Duration  2.47s (tests 51%, environment 32%, import 7%, transform 5%, setup 5%)
 ```
 
 `npm run lint` (sin errores; `tsc` no imprime nada cuando pasa):
@@ -278,12 +280,12 @@ Fuera del módulo, la corrida incluye `catalogo.test.ts` (2) y `sesion.test.ts` 
 
 Running 4 tests using 2 workers
 
-  ✓  1 [chromium] › e2e/navegacion.spec.ts:3:5 › el vendedor ingresa, consulta el catálogo y ve los tenderos de su zona (715ms)
-  ✓  2 [chromium] › e2e/registro-tendero.spec.ts:28:5 › CA25 y CA2: registra un tendero y vuelve a la lista con «Tendero registrado» (921ms)
-  ✓  3 [chromium] › e2e/navegacion.spec.ts:19:5 › un código de vendedor desconocido muestra un error (271ms)
-  ✓  4 [chromium] › e2e/registro-tendero.spec.ts:40:5 › CA22 y CA13: un DI repetido con puntos muestra el mensaje y conserva lo escrito (781ms)
+  ✓  1 [chromium] › e2e/navegacion.spec.ts:3:5 › el vendedor ingresa, consulta el catálogo y ve los tenderos de su zona (1.0s)
+  ✓  2 [chromium] › e2e/registro-tendero.spec.ts:28:5 › CA25 y CA2: registra un tendero y vuelve a la lista con «Tendero registrado» (1.2s)
+  ✓  3 [chromium] › e2e/navegacion.spec.ts:19:5 › un código de vendedor desconocido muestra un error (274ms)
+  ✓  4 [chromium] › e2e/registro-tendero.spec.ts:40:5 › CA22 y CA13: un DI repetido con puntos muestra el mensaje y conserva lo escrito (795ms)
 
-  4 passed (3.7s)
+  4 passed (4.0s)
 ```
 
 Nada falló. Ninguna prueba e2e cubre la edición ni la búsqueda.
@@ -296,9 +298,9 @@ Criterio: «hecho» solo si una prueba e2e la recorre de punta a punta (web → 
 
 | Funcionalidad | Estado | Evidencia | Qué falta |
 |---|---|---|---|
-| Ver la lista de tenderos de la zona | Parcial | e2e `navegacion.spec.ts:14-16` y `registro-tendero.spec.ts:33-37` comprueban que la lista carga y que aparece un tendero recién registrado. El título «Tenderos de la zona Norte» sale de la sesión (`Tenderos.tsx:24`), no de la API. El filtro por zona solo lo prueba la API (`tenderos.test.ts:6-12`; `registro-tendero.test.ts:44-52`) | Un e2e que compruebe que las filas son de la zona del vendedor y que faltan las de otras zonas (la mitad de CA2 que no se prueba de punta a punta: `HU-101-registro-de-tenderos.md:17`) |
-| Buscar tiendas por nombre en la API (HU-103 CA2, CA3, CA5) | Parcial | API `busqueda-tenderos.test.ts:29-85`. Las de CA3 (`:59-73`) pasarían también sin HU-103, porque la API ya devolvía la lista completa | El campo «Buscar tienda» en la web (CA1), el mensaje sin resultados (CA4) y un e2e |
-| Mensaje si la lista no carga | Parcial | `Tenderos.tsx:19`; componente `Tenderos.test.tsx:40-48` (fetch simulado) | Muestra el mensaje de la API, no el texto de D11 (PC-04). Sin e2e |
+| Ver la lista de tenderos de la zona | Parcial | e2e `navegacion.spec.ts:14-16` y `registro-tendero.spec.ts:33-37` comprueban que la lista carga y que aparece un tendero recién registrado. El título «Tenderos de la zona Norte» sale de la sesión (`Tenderos.tsx:43`), no de la API. El filtro por zona solo lo prueba la API (`tenderos.test.ts:6-12`; `registro-tendero.test.ts:44-52`) | Un e2e que compruebe que las filas son de la zona del vendedor y que faltan las de otras zonas (la mitad de CA2 que no se prueba de punta a punta: `HU-101-registro-de-tenderos.md:17`) |
+| Buscar tiendas por nombre (HU-103 CA1 a CA5) | Parcial | API `busqueda-tenderos.test.ts:29-85` (las de CA3, `:59-73`, pasarían también sin HU-103, porque la API ya devolvía la lista completa); componente `BusquedaTenderos.test.tsx:56-156` (fetch simulado) | Un e2e que recorra la búsqueda de punta a punta |
+| Mensaje si la lista no carga | Parcial | `Tenderos.tsx:34`; componente `Tenderos.test.tsx:40-48` (fetch simulado) | Muestra el mensaje de la API, no el texto de D11 (PC-04). Sin e2e |
 | Registrar un tendero válido y volver a la lista con «Tendero registrado» | Hecho | e2e `registro-tendero.spec.ts:28-38`; API `registro-tendero.test.ts:36-59`; componente `RegistrarTendero.test.tsx:123-169` | — |
 | Rechazar un documento duplicado en la zona (incluido escrito con puntos) y conservar lo escrito | Hecho | e2e `registro-tendero.spec.ts:40-58`; API `registro-tendero.test.ts:154-161, 190-211` | — |
 | Duplicado en otra zona y duplicado inactivo (mensaje según zona) | Parcial | API `registro-tendero.test.ts:163-188` | Sin e2e. La app no tiene forma de crear un inactivo (R26); un e2e tendría que prepararlo en la base |
@@ -310,7 +312,7 @@ Criterio: «hecho» solo si una prueba e2e la recorre de punta a punta (web → 
 | No editar un tendero de otra zona (403) ni uno inactivo (409) | Parcial | API `tenderos.test.ts:224-261` | Sin e2e. Se puede saltar cambiando `vendedorId` (PC-03) |
 | Guardar desde el formulario de edición | Pendiente | `api.ts:54-55` no envía `vendedorId` y `tenderos.ts:125-128` responde 400; ninguna prueba envía el formulario (`EditarTendero.test.tsx` solo prueba la carga) | Enviar `vendedorId` y probarlo (paso 5 del plan, `HU-102-plan.md:162`) (PC-01) |
 | Validación en el formulario de edición | Pendiente | `EditarTendero.tsx:47-56` sin `required` ni `maxLength` | Paso 4 del plan (`HU-102-plan.md:145`) (PC-06) |
-| Bloquear en el formulario a un tendero inactivo | Pendiente | `EditarTendero.tsx` no lee `estado`; la lista enlaza «Editar» en todas las filas (`Tenderos.tsx:37`) | Paso 5 del plan; decisión «Formulario» (`HU-102-decisiones-del-equipo.md:41`) |
+| Bloquear en el formulario a un tendero inactivo | Pendiente | `EditarTendero.tsx` no lee `estado`; la lista enlaza «Editar» en todas las filas (`Tenderos.tsx:58`) | Paso 5 del plan; decisión «Formulario» (`HU-102-decisiones-del-equipo.md:41`) |
 | Volver a la lista con «Datos actualizados» tras editar (CA18) | Pendiente | `EditarTendero.tsx:37` muestra «Datos guardados» y no navega. `Tenderos.test.tsx:50-65` solo prueba que la lista muestra el mensaje si se lo pasan en `location.state` | Navegar a `/tenderos` con ese estado (paso 6, `HU-102-plan.md:192`) y e2e (paso 7) (PC-07) |
 | Unicidad del documento en la base | Parcial | `002_tenderos_documento_unico.sql:2`; `migraciones.test.ts:25-35`. El e2e `registro-tendero.spec.ts:40-50` solo cubre el rechazo de un duplicado, que ya está en la fila «Rechazar un documento duplicado» | Un e2e de CA14 (el mismo número con otro tipo se acepta). El e2e del duplicado no comprueba que en la base quede un solo tendero (solo lo comprueba la API, `registro-tendero.test.ts:160`) |
 
@@ -323,7 +325,7 @@ Criterio: «hecho» solo si una prueba e2e la recorre de punta a punta (web → 
 | PC-01 | Guardar desde el formulario de edición siempre falla con «No se pudo guardar: Falta el vendedor.» | `api.ts:54-55` (sin `?vendedorId=`); `tenderos.ts:125-128`; `EditarTendero.tsx:39` | `docs/planes/HU-102-pr.md:124`; riesgo 16 de `HU-102-plan.md:262`; auditoría H17 |
 | PC-02 | Los comentarios del código dicen que el endpoint de edición no existe, y sí existe | `EditarTendero.tsx:7-11`; `api.ts:53` frente a `tenderos.ts:118-161` | Auditoría H01 (`docs/auditoria-documentacion.md:38`) |
 | PC-03 | La API confía en el `vendedorId` que manda el cliente: el control de zona (lista y 403 del PUT) se salta cambiando ese valor | `tenderos.ts:17, 24, 64` | Decisión «Identidad del vendedor» (`HU-102-decisiones-del-equipo.md:26`); auditoría H05 |
-| PC-04 | Si la lista no carga, la web muestra el mensaje de la API y no el texto aprobado «No se pudo cargar la lista de tenderos» (ese texto solo se usa si el error no es un `Error`, lo que no ocurre con `llamar`) | `Tenderos.tsx:19`; `api.ts:40` | D11 (`HU-101-decisiones-del-equipo.md:30`); auditoría H16 |
+| PC-04 | Si la lista no carga, la web muestra el mensaje de la API y no el texto aprobado «No se pudo cargar la lista de tenderos» (ese texto solo se usa si el error no es un `Error`, lo que no ocurre con `llamar`) | `Tenderos.tsx:34`; `api.ts:40` | D11 (`HU-101-decisiones-del-equipo.md:30`); auditoría H16 |
 | PC-05 | Si la carga de la edición falla (id inexistente o no numérico), la promesa no tiene `catch`: el formulario queda vacío y no se muestra ningún error | `EditarTendero.tsx:17-27` | Lectura del código para este documento |
 | PC-06 | El formulario de edición no valida nada en el cliente | `EditarTendero.tsx:47-56` | Paso 4 de `HU-102-plan.md:145`; auditoría H04 (regla de correo del paso 4) |
 | PC-07 | Tras editar no se vuelve a la lista con «Datos actualizados»; se queda en la pantalla con «Datos guardados» | `EditarTendero.tsx:37` | HU-102 P7 (`HU-102-respuestas-del-product-owner.md:13`); paso 6 de `HU-102-plan.md:192` |
@@ -333,7 +335,7 @@ Criterio: «hecho» solo si una prueba e2e la recorre de punta a punta (web → 
 | PC-11 | Los mensajes de error no son uniformes: `GET` sin punto (`Falta el vendedor`, `Vendedor no encontrado`, `Tendero no encontrado`) y POST/PUT con punto (`Falta el vendedor.`, `Vendedor no encontrado.`, `No encontramos este tendero.`) | `tenderos.ts:39-40, 66, 105, 110, 121, 127, 134` | Auditoría H13; `HU-102-pr.md:127` |
 | PC-12 | `400 Identificador inválido` de `GET /api/tenderos/:id` no tiene prueba | `tenderos.ts:104-107`; ninguna prueba en `tenderos.test.ts:29-42` | Lectura del código para este documento |
 | PC-13 | La historia HU-102 todavía dice que el documento se edita (CA15, CA19, CA20) y que el correo pasa a minúsculas (CA8); el código hace lo contrario | `tendero.ts:59, 116-125`; `tenderos.test.ts:141-146, 195-206` | Auditoría H02; respuestas P1 c, P2 y P5 de HU-102 |
-| PC-14 | La lista muestra también los tenderos inactivos, con enlace «Editar», y editarlos responde 409 | `tenderos.ts:48-52` (sin filtro de estado, tampoco en la búsqueda: `busqueda-tenderos.test.ts:87-94`); `Tenderos.tsx:37`; `tenderos.ts:141-144` | Lectura del código para este documento (ver Dudas) |
+| PC-14 | La lista muestra también los tenderos inactivos, con enlace «Editar», y editarlos responde 409 | `tenderos.ts:48-52` (sin filtro de estado, tampoco en la búsqueda: `busqueda-tenderos.test.ts:87-94`); `Tenderos.tsx:58`; `tenderos.ts:141-144` | Lectura del código para este documento (ver Dudas) |
 | PC-15 | Con `npm run dev` levantado, el e2e reutiliza esos servidores y escribe en la base local; los DI de las pruebas son fijos | `playwright.config.ts:20, 26`; `e2e/registro-tendero.spec.ts:30, 42` | Auditoría H08 |
 | PC-16 | Los parámetros de ruta y de consulta se validan con `Number()` y no con zod, a pesar de la convención de `CLAUDE.md` | `tenderos.ts:24-25, 103-104, 119-120`. El parámetro `?buscar=` de HU-103 sí se valida con zod (`tenderos.ts:43`) | Auditoría H14 |
 | PC-17 | No hay prueba e2e de la edición | `e2e/` solo tiene `navegacion.spec.ts` y `registro-tendero.spec.ts` | Paso 7 de `HU-102-plan.md:200`; `HU-102-pr.md:71` |

@@ -26,6 +26,7 @@ El vendedor entra con su código (por ejemplo, `V-101`). En este sprint el ingre
 | Ingreso del vendedor | Hecho. Sesión simulada con el código del vendedor. |
 | Catálogo | Hecho. Lista de productos con filtro por categoría; no muestra precios. |
 | Tenderos de la zona | Hecho, solo lectura. Lista de los tenderos de la zona del vendedor. |
+| Búsqueda de tenderos por nombre de tienda | En construcción en este sprint (HU-103). La lista de tenderos tiene el campo «Buscar tienda»; el filtro lo hace la API con `buscar`. Las reglas de comparación son propuestas pendientes de aprobación (`docs/planes/HU-103-decisiones-propuestas.md`). |
 | Registro de tenderos | Hecho. El vendedor registra un tendero desde la lista de tenderos (HU-101). |
 | Edición de datos del tendero | En construcción en este sprint (HU-102). La API guarda los cambios con `PUT /api/tenderos/:id`. La pantalla existe, pero todavía no valida los datos ni guarda los cambios. |
 

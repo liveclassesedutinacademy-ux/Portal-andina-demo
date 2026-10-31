@@ -46,7 +46,7 @@ export const api = {
     llamar<{ vendedor: Vendedor }>('/api/sesion', { method: 'POST', body: JSON.stringify({ codigoVendedor }) }),
   catalogo: (categoria?: string) =>
     llamar<{ productos: Producto[] }>(`/api/catalogo${categoria ? `?categoria=${encodeURIComponent(categoria)}` : ''}`),
-  tenderos: (vendedorId: number) => llamar<{ tenderos: Tendero[] }>(`/api/tenderos?vendedorId=${vendedorId}`),
+  tenderos: (vendedorId: number, buscar = '') => llamar<{ tenderos: Tendero[] }>(`/api/tenderos?vendedorId=${vendedorId}${buscar ? `&buscar=${encodeURIComponent(buscar)}` : ''}`),
   tendero: (id: number) => llamar<{ tendero: Tendero }>(`/api/tenderos/${id}`),
   registrarTendero: (datos: DatosRegistroTendero) =>
     llamar<{ tendero: Tendero }>('/api/tenderos', { method: 'POST', body: JSON.stringify(datos) }),

@@ -1,0 +1,54 @@
+name: Despliegue de laboratorio
+
+# Despliega la rama principal al ambiente «laboratorio» y deja el despliegue registrado
+# en la pestaña Environments del repositorio, con su fecha, su commit y su resultado.
+# No publica el portal en ningún servidor: el «despliegue» es el paquete de la web y de la API,
+# guardado como artefacto. Es la evidencia del nivel «despliegue» del DoD (TEC-TRC-04).
+# Distribuidora Andina y Nodo Software son empresas ficticias.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  desplegar:
+    runs-on: ubuntu-latest
+    environment: laboratorio
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Pruebas de la API y de la web
+        run: npm test
+
+      - name: Revisión de tipos
+        run: npm run lint
+
+      - name: Validación de la documentación
+        run: npm run docs:validar
+
+      - name: Construir la web
+        run: npm run build -w apps/web
+
+      - name: Guardar el paquete desplegado
+        uses: actions/upload-artifact@v4
+        with:
+          name: portal-andina-${{ github.sha }}
+          path: |
+            apps/web/dist
+            apps/api/src
+            apps/api/migrations
+            apps/api/package.json
+            package.json
+            package-lock.json
